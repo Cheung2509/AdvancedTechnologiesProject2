@@ -13,27 +13,36 @@
 int main()
 {
     std::shared_ptr<sf::RenderWindow> window = std::make_shared<sf::RenderWindow>
-		(sf::VideoMode(400, 400), "Advanced Tech Block 2");
+		(sf::VideoMode(700, 700), "Advanced Tech Block 2");
 
 	std::vector<Shape*> shapes;
-	Sphere* sphere = new Sphere(3.0f, glm::vec3(1.0f,0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), 1.0f);
-	sphere->setPos(glm::vec3(0.0f, 0.0f, -20.0f));
+	Sphere* sphere = new Sphere(2.0f, glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), 1.0f, 0.0f);
+	sphere->setPos(glm::vec3(0.0f, 0.0f, -5.0f));
+	shapes.emplace_back(sphere);
+	
+	Sphere* sphere2 = new Sphere(2.0f, glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), 1.0f, 0.0f);
+	sphere2->setPos(glm::vec3(-5.0f, 0.0f, -5.0f));
+	shapes.push_back(sphere2);
+
+	Sphere* sphere3 = new Sphere(2.0f, glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, 0.0f, 0.0f), 1.0f, 0.0f);
+	sphere3->setPos(glm::vec3(0.0f, -4.0f, -5.0f));
+	shapes.push_back(sphere3);
 	
 	Sphere* light = new Sphere(3.0f, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(3.0f, 3.0f, 3.0f));
-	light->setPos(glm::vec3(0.0f, 20.0f, -30.0f));
+	light->setPos(glm::vec3(20.0f, 20.0f, 30.0f));
 	shapes.emplace_back(light);
 		
 	std::shared_ptr<Camera> camera = std::make_shared<Camera>(30,
 															  window->getSize().x / window->getSize().y,
 															  glm::vec3(0.0f, 1.0f, 0.0f), sphere->getPos());
 
-	shapes.emplace_back(sphere);
+	
 	
 	Image image = Image(window->getSize().x, window->getSize().y);
 
 	float invWidth = 1 / float(image.getSize().x);
 	float invHeight = 1 / float(image.getSize().y);
-	float angle = tan(M_PI * 0.5 * camera->getFOV() / 180.);
+	float angle = glm::angle(camera->getRotation());
 	
 	for (int x = 0; x < image.getSize().x; x++)
 	{
@@ -69,5 +78,10 @@ int main()
         window->display();
     }
     
+	for (auto& obj : shapes)
+	{
+		delete obj;
+	}
+
 	return 0;
 }
