@@ -3,6 +3,8 @@
 #include <SFML/Graphics.hpp>
 #include <SFML/System.hpp>
 
+#include <glm/glm.hpp>
+
 class Image
 {
 public:
@@ -10,6 +12,7 @@ public:
 	~Image() = default;
 
 	void putPixel(sf::Vector2u pos, sf::Color colour);
+	void putPixel(sf::Vector2u pos, glm::vec3 colour);
 
 	bool exportImage();
 	void draw(sf::RenderWindow* renderWindow);

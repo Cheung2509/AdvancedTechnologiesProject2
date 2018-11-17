@@ -1,7 +1,8 @@
 #include "Sphere.h"
 
-Sphere::Sphere(const float & r, const glm::vec4 & sCol, const glm::vec4 eCol, const float & refl)
-	:m_radius(r), m_radius2(r*r), m_surfaceColour(sCol), m_emissionColour(eCol), m_reflection(refl)
+Sphere::Sphere(const float & r, const glm::vec3 & sCol, const glm::vec3 eCol,
+			   const float & refl, const float& transp)
+	:m_radius(r), m_radius2(r*r), Shape(sCol, eCol, refl, transp)
 {
 }
 

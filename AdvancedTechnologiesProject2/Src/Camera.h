@@ -12,6 +12,9 @@ public:
 		   const glm::vec3 target = glm::vec3(0, 0, 0));
 	~Camera() = default;
 
+	const float& getFOV() const { return m_fov; }
+	const float& getAspectRatio() const { return m_aspectRatio; }
+
 private:
 	
 	float m_fov;
