@@ -6,55 +6,45 @@
 #include "Image.h"
 #include "Camera.h"
 #include "Sphere.h"
-#include "Ray.h"
-
-#define M_PI 3.141592653589793
+#include "Light.h"
 
 int main()
-{
-    std::shared_ptr<sf::RenderWindow> window = std::make_shared<sf::RenderWindow>
+{   
+	std::shared_ptr<sf::RenderWindow> window = std::make_shared<sf::RenderWindow>
 		(sf::VideoMode(700, 700), "Advanced Tech Block 2");
 
-	std::vector<Shape*> shapes;
-	Sphere* sphere = new Sphere(2.0f, glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), 1.0f, 0.0f);
+	std::vector<std::unique_ptr<Shape>> shapes;
+	std::vector<std::unique_ptr<Light>> lights;
+
+	auto light = std::make_unique<Light>();
+	light->setIntensity(1);
+	light->setPos(glm::vec3(0.0f, 20.0f, 0.0f));
+	lights.push_back(std::move(light));
+
+	auto light2 = std::make_unique<Light>();
+	light2->setIntensity(0.5f);
+	light2->setPos(glm::vec3(0.0f, -20.0f, 0.0f));
+	lights.push_back(std::move(light2));
+
+	auto sphere = std::make_unique<Sphere>(1.0f, glm::vec3(1.0f, 0.0f, 0.0f));
+	sphere->setMaterialType(MaterialType::REFLECTION_AND_REFRACTION);
 	sphere->setPos(glm::vec3(0.0f, 0.0f, -5.0f));
-	shapes.emplace_back(sphere);
-	
-	Sphere* sphere2 = new Sphere(2.0f, glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), 1.0f, 0.0f);
-	sphere2->setPos(glm::vec3(-5.0f, 0.0f, -5.0f));
-	shapes.push_back(sphere2);
 
-	Sphere* sphere3 = new Sphere(2.0f, glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, 0.0f, 0.0f), 1.0f, 0.0f);
-	sphere3->setPos(glm::vec3(0.0f, -4.0f, -5.0f));
-	shapes.push_back(sphere3);
+	auto sphere2 = std::make_unique<Sphere>(1.0f, glm::vec3(0.0f, 1.0f, 1.0f));
+	sphere2->setMaterialType(MaterialType::REFLECTION_AND_REFRACTION);
+	sphere2->setIOR(1.5f);
+	sphere2->setPos(glm::vec3(0.0f, 2.0f, -5.0f));
+	shapes.push_back(std::move(sphere2));
 	
-	Sphere* light = new Sphere(3.0f, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(3.0f, 3.0f, 3.0f));
-	light->setPos(glm::vec3(20.0f, 20.0f, 30.0f));
-	shapes.emplace_back(light);
-		
-	std::shared_ptr<Camera> camera = std::make_shared<Camera>(30,
-															  window->getSize().x / window->getSize().y,
-															  glm::vec3(0.0f, 1.0f, 0.0f), sphere->getPos());
+	std::shared_ptr<Camera> camera = std::make_shared<Camera>(90, window->getSize().x / window->getSize().y,
+															  glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f,0.0f, 1.0f));
 
 	
+	shapes.push_back(std::move(sphere));
 	
-	Image image = Image(window->getSize().x, window->getSize().y);
+	Image image = Image(camera.get(), window->getSize().x, window->getSize().y);
 
-	float invWidth = 1 / float(image.getSize().x);
-	float invHeight = 1 / float(image.getSize().y);
-	float angle = glm::angle(camera->getRotation());
-	
-	for (int x = 0; x < image.getSize().x; x++)
-	{
-		for (int y = 0; y < image.getSize().y; y++)
-		{
-			float xx = (2 * ((x + 0.5f) * invWidth) - 1) * angle* camera->getAspectRatio();
-			float yy = (1 - 2 * ((y + 0.5f)* invHeight)) * angle;
-			glm::vec3 rayDir = glm::normalize(glm::vec3(xx, yy, -1.0f));
-
-			image.putPixel(sf::Vector2u(x, y), Ray::trace(camera->getPos(), rayDir, shapes, 0));
-		}
-	}
+	image.render(camera.get(), shapes, lights);
 
     while (window->isOpen())
     {
@@ -77,11 +67,6 @@ int main()
 		image.draw(window.get());
         window->display();
     }
-    
-	for (auto& obj : shapes)
-	{
-		delete obj;
-	}
 
 	return 0;
 }

@@ -9,13 +9,14 @@
 class Sphere : public Shape
 {
 public:
-	Sphere() = default;
-	Sphere(const float& r, const glm::vec3& sCol, 
-		   const glm::vec3 eCol = glm::vec3(0.0f,0.0f,0.0f),
-		   const float& refl = 0, const float& transp = 0);
-	~Sphere() = default;
+	Sphere() {};
+	Sphere(const float& r, const glm::vec3& colour);
+	~Sphere() {};
 
-	bool intersect(const glm::vec3& rayorig, const glm::vec3& rayDir, float &t0, float& t1) const;
+	bool intersect(const glm::vec3 &orig, const glm::vec3 &dir, float &tnear, std::uint64_t &index, glm::vec2 &uv);
+	void getSurfaceData(const glm::vec3& pHit, glm::vec3& nHit, glm::vec2& tex) const;
+	void getSurfaceProperties(const glm::vec3& p, const glm::vec3& i, const uint64_t& index, const glm::vec2& uv, glm::vec3& n, glm::vec2& st) const;
+
 
 private:
 	float m_radius;
