@@ -7,7 +7,7 @@
 
 #include <vector>
 
-class Shape;
+class Geometry;
 class Light;
 class Camera;
 
@@ -15,7 +15,7 @@ struct ImageData
 {
 	glm::u64vec2 m_size;
 	std::uint8_t m_maxDepth = 5;
-	glm::vec3 m_backgroundColour = glm::vec3(0.0f, 0.0f, 0.0f);
+	glm::vec3 m_backgroundColour = glm::vec3(1.0f, 1.0f, 1.0f);
 	float m_bias = 0.00001;
 	float m_aspectRatio;
 	float m_fov;
@@ -27,11 +27,11 @@ public:
 	Image(Camera* camera, unsigned int sizeX = 640, unsigned int sizeY = 480);
 	~Image() = default;
 
-	void putPixel(sf::Vector2u pos, sf::Color colour);
-	void putPixel(sf::Vector2u pos, glm::vec3 colour);
+	void putPixel(glm::u64vec2 pos, sf::Color colour);
+	void putPixel(glm::u64vec2 pos, glm::vec3 colour);
 
 	//void createImage(Camera* camera, const std::vector<std::unique_ptr<Shape>>& shapes);
-	void render(Camera* camera, const std::vector<std::unique_ptr<Shape>>& shapes,
+	void render(Camera* camera, const std::vector<std::unique_ptr<Geometry>>& shapes,
 				const std::vector<std::unique_ptr<Light>>& lights);
 
 	bool exportImage();

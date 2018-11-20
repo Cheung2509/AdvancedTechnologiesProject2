@@ -13,7 +13,7 @@ int main()
 	std::shared_ptr<sf::RenderWindow> window = std::make_shared<sf::RenderWindow>
 		(sf::VideoMode(700, 700), "Advanced Tech Block 2");
 
-	std::vector<std::unique_ptr<Shape>> shapes;
+	std::vector<std::unique_ptr<Geometry>> shapes;
 	std::vector<std::unique_ptr<Light>> lights;
 
 	auto light = std::make_unique<Light>();
@@ -27,18 +27,33 @@ int main()
 	lights.push_back(std::move(light2));
 
 	auto sphere = std::make_unique<Sphere>(1.0f, glm::vec3(1.0f, 0.0f, 0.0f));
-	sphere->setMaterialType(MaterialType::REFLECTION_AND_REFRACTION);
+	sphere->setMaterialType(MaterialType::DIFFUSE_AND_GLOSSY);
 	sphere->setPos(glm::vec3(0.0f, 0.0f, -5.0f));
 
-	auto sphere2 = std::make_unique<Sphere>(1.0f, glm::vec3(0.0f, 1.0f, 1.0f));
-	sphere2->setMaterialType(MaterialType::REFLECTION_AND_REFRACTION);
-	sphere2->setIOR(1.5f);
-	sphere2->setPos(glm::vec3(0.0f, 2.0f, -5.0f));
+	auto sphere2 = std::make_unique<Sphere>(1.0f, glm::vec3(0.0f, 1.0f, 0.0f));
+	sphere2->setMaterialType(MaterialType::DIFFUSE_AND_GLOSSY);
+	sphere2->setPos(glm::vec3(2.0f, 0.0f, -5.0f));
 	shapes.push_back(std::move(sphere2));
-	
-	std::shared_ptr<Camera> camera = std::make_shared<Camera>(90, window->getSize().x / window->getSize().y,
-															  glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f,0.0f, 1.0f));
 
+	auto sphere3= std::make_unique<Sphere>(1.0f, glm::vec3(0.0f, 0.0f, 1.0f));
+	sphere3->setMaterialType(MaterialType::DIFFUSE_AND_GLOSSY);
+	sphere3->setPos(glm::vec3(-2.0f, 0.0f, -5.0f));
+	shapes.push_back(std::move(sphere3));
+
+	auto mirror = std::make_unique<Sphere>(1.0f, glm::vec3(0.0f, 1.0f, 0.0f));
+	mirror->setMaterialType(MaterialType::REFLECTION);
+	mirror->setPos(glm::vec3(0.0f, 2.0f, -5.0f));
+	shapes.push_back(std::move(mirror));
+	
+	auto sphere4 = std::make_unique<Sphere>(1.0f, glm::vec3(0.0f, 0.0f, 1.0f));
+	sphere4->setMaterialType(MaterialType::REFLECTION_AND_REFRACTION);
+	sphere4->setSpecularExponent(25.0f);
+	sphere4->setPos(glm::vec3(0.0f, -2.0f, -5.0f));
+	shapes.push_back(std::move(sphere4));
+
+	auto camera = std::make_unique<Camera>(90, window->getSize().x / window->getSize().y,
+															  glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	camera->setPos(glm::vec3(0.0f, 0.0f, 0.0f));
 	
 	shapes.push_back(std::move(sphere));
 	

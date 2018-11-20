@@ -1,8 +1,8 @@
 #pragma once
 
-#include "Actor.h"
+#include "Object.h"
 
-class Light : public Actor
+class Light : public Object
 {
 public:
 	Light() {};

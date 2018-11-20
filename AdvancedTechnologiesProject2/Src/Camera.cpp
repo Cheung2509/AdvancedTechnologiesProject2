@@ -7,12 +7,5 @@ Camera::Camera(const float & fieldOfView, const float & aspectRatio,
 {
 	m_pos = glm::vec3(0.0f, 0.0f, 0.0f);
 	
-	m_projectionMatrix = glm::perspective(m_fov, m_aspectRatio, m_nearPlaneDistance, 
-										  m_farPlaneDistance);
-	
-	m_viewMatrix = glm::lookAtLH(m_pos, m_target, m_up);
-
-	m_rotation = m_viewMatrix;
-
-	glm::translate(m_worldMatrix, m_pos);
+	m_rotation = glm::lookAt(m_pos, m_target, m_up);
 }

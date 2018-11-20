@@ -4,9 +4,9 @@
 
 #include <glm/glm.hpp>
 
-#include "Shape.h"
+#include "Geometry.h"
 
-class Sphere : public Shape
+class Sphere : public Geometry
 {
 public:
 	Sphere() {};

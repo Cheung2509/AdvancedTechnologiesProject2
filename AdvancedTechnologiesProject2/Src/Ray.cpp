@@ -1,6 +1,6 @@
 #include "Ray.h"
 
-#include "Shape.h"
+#include "Geometry.h"
 #include "Light.h"
 
 #include <iostream>
@@ -8,8 +8,8 @@
 constexpr float kInfinity = std::numeric_limits<float>::max();
 
 const bool & Ray::trace(const glm::vec3 &orig, const glm::vec3 &dir,
-						const std::vector<std::unique_ptr<Shape>> &objects,
-						float &tNear, std::uint64_t &index, glm::vec2 &uv, Shape **hitObject)
+						const std::vector<std::unique_ptr<Geometry>> &objects,
+						float &tNear, std::uint64_t &index, glm::vec2 &uv, Geometry **hitObject)
 {
 	*hitObject = nullptr;
 
@@ -42,7 +42,7 @@ const glm::vec3 Ray::mix(const glm::vec3 & a, const glm::vec3 & b, const float &
 }
 
 glm::vec3 Ray::castRay(const glm::vec3 & orig, const glm::vec3 & dir, 
-					   const std::vector<std::unique_ptr<Shape>>& shapes,
+					   const std::vector<std::unique_ptr<Geometry>>& shapes,
 					   const std::vector<std::unique_ptr<Light>>& lights, 
 					   ImageData data, std::uint64_t depth, bool test)
 {
@@ -55,7 +55,7 @@ glm::vec3 Ray::castRay(const glm::vec3 & orig, const glm::vec3 & dir,
 	float tNear = kInfinity;
 	glm::vec2 uv;
 	std::uint64_t index = 0;
-	Shape* hitObject = nullptr;
+	Geometry* hitObject = nullptr;
 
 	if (trace(orig, dir, shapes, tNear, index, uv, &hitObject))
 	{
@@ -68,7 +68,7 @@ glm::vec3 Ray::castRay(const glm::vec3 & orig, const glm::vec3 & dir,
 
 		switch (hitObject->getMaterialType())
 		{
-		case MaterialType::DIFFUSE_AND_GLOSSY:
+		case MaterialType::REFLECTION_AND_REFRACTION:
 		{
 			glm::vec3 reflctionDir = glm::normalize(reflect(dir, n));
 			glm::vec3 refractionDir = glm::normalize(refract(dir, n, hitObject->getIOR()));
@@ -117,7 +117,7 @@ glm::vec3 Ray::castRay(const glm::vec3 & orig, const glm::vec3 & dir,
 				float lightDistance2 = glm::dot(lightDir, lightDir);
 				lightDir = glm::normalize(lightDir);
 				float lDotN = glm::max(0.0f, glm::dot(lightDir, n));
-				Shape* shadowHitObject = nullptr;
+				Geometry* shadowHitObject = nullptr;
 				float tNearShadow = kInfinity;
 
 				bool inShadow = trace(shadowPointOrig, lightDir, shapes, tNearShadow, index, uv, &shadowHitObject)

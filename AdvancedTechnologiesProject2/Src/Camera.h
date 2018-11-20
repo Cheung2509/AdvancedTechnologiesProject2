@@ -1,9 +1,9 @@
 #pragma once
 
-#include "Actor.h"
+#include "Object.h"
 
 
-class Camera : public Actor
+class Camera : public Object
 {
 public:
 	Camera() = default;

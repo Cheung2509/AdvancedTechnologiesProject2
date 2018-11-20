@@ -150,12 +150,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="Src\Actor.h" />
+    <ClInclude Include="Src\Object.h" />
     <ClInclude Include="Src\Camera.h" />
     <ClInclude Include="Src\Image.h" />
     <ClInclude Include="Src\Light.h" />
     <ClInclude Include="Src\Ray.h" />
-    <ClInclude Include="Src\Shape.h" />
+    <ClInclude Include="Src\Geometry.h" />
     <ClInclude Include="Src\Sphere.h" />
     <ClInclude Include="Src\vendor\glm\common.hpp" />
     <ClInclude Include="Src\vendor\glm\detail\compute_common.hpp" />
@@ -399,7 +399,6 @@
     <ClInclude Include="Src\vendor\glm\vector_relational.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Src\Actor.cpp" />
     <ClCompile Include="Src\Camera.cpp" />
     <ClCompile Include="Src\Image.cpp" />
     <ClCompile Include="Src\main.cpp" />

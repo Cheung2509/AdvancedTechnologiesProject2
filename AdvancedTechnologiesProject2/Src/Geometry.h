@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Actor.h"
+#include "Object.h"
 
 enum MaterialType
 {
@@ -9,12 +9,13 @@ enum MaterialType
 	REFLECTION
 };
 
-class Shape : public Actor
+class Geometry : public Object
 {
 public:
-	Shape() {};
-	Shape(const glm::vec3& col, MaterialType type = DIFFUSE_AND_GLOSSY, float ior = 1.3f, float kd = 0.8f, float ks = 0.2, float specular = 25);
-	virtual ~Shape() {};
+	Geometry() {};
+	Geometry(const glm::vec3& col, MaterialType type = DIFFUSE_AND_GLOSSY, float ior = 1.3f, float kd = 0.8f, float ks = 0.2, 
+		  float specular = 25);
+	virtual ~Geometry() {};
 
 	virtual bool intersect(const glm::vec3 &, const glm::vec3 &, float &, std::uint64_t &, glm::vec2 &) = 0;
 	virtual void getSurfaceData(const glm::vec3& pHit, glm::vec3& nHit, glm::vec2& tex) const = 0;

@@ -5,7 +5,7 @@
 #include <iostream>
 
 Sphere::Sphere(const float & r, const glm::vec3 & colour)
-	:m_radius(r), m_radius2(r*r), Shape(colour)
+	:m_radius(r), m_radius2(r*r), Geometry(colour)
 {
 }
 

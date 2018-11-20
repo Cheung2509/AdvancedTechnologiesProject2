@@ -1,13 +1,13 @@
-#include "Shape.h"
+#include "Geometry.h"
 
 #include <algorithm>
 
-Shape::Shape(const glm::vec3 & col, MaterialType type, float ior, float kd, float ks, float specular)
+Geometry::Geometry(const glm::vec3 & col, MaterialType type, float ior, float kd, float ks, float specular)
 	:m_diffuseColour(col), m_matType(type), m_ior(ior), m_kd(kd), m_ks(ks), m_specularExponent(specular)
 {
 }
 
-bool Shape::solveQuadratic(const float & a, const float & b, float & c, float & x0, float & x1)
+bool Geometry::solveQuadratic(const float & a, const float & b, float & c, float & x0, float & x1)
 {
 	float discr = b * b - 4 * a * c;
 

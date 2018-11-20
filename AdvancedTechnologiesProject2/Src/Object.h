@@ -3,11 +3,11 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 
-class Actor
+class Object
 {
 public:
-	Actor();
-	virtual ~Actor() = default;
+	Object() = default;
+	virtual ~Object() = default;
 
 	const glm::vec3& getPos() const { return m_pos; }
 	void setPos(const glm::vec3& pos) { m_pos = pos; }
@@ -16,7 +16,6 @@ public:
 	void setRotation(const glm::quat& rot) { m_rotation = rot; }
 
 	const glm::mat4& getWorld() const { return m_worldMatrix; }
-
 protected:
 	glm::vec3 m_pos;
 	glm::quat m_rotation;

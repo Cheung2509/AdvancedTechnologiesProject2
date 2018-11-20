@@ -4,7 +4,7 @@
 #include <iostream>
 #include <glm/glm.hpp>
 
-#include "Shape.h"
+#include "Geometry.h"
 #include "Camera.h"
 #include "Ray.h"
 
@@ -22,14 +22,14 @@ Image::Image(Camera* camera, unsigned int sizeX, unsigned int sizeY)
 	}
 }
 
-void Image::putPixel(sf::Vector2u pos, sf::Color colour)
+void Image::putPixel(glm::u64vec2 pos, sf::Color colour)
 {
 	*m_pixels[(m_imageData.m_size.x * pos.x + pos.y) * 3] = colour.r;
 	*m_pixels[(m_imageData.m_size.x * pos.x + pos.y) * 3 + 1] = colour.g;
 	*m_pixels[(m_imageData.m_size.x * pos.x + pos.y) * 3 + 2] = colour.b;
 }
 
-void Image::putPixel(sf::Vector2u pos, glm::vec3 colour)
+void Image::putPixel(glm::u64vec2 pos, glm::vec3 colour)
 {
 	*m_pixels[(m_imageData.m_size.x * pos.x + pos.y) * 4] = colour.x;
 	*m_pixels[(m_imageData.m_size.x * pos.x + pos.y) * 4 + 1] = colour.y;
@@ -71,29 +71,25 @@ void Image::putPixel(sf::Vector2u pos, glm::vec3 colour)
 //	m_sprite.setTexture(m_texture);
 //}
 
-void Image::render(Camera * camera, const std::vector<std::unique_ptr<Shape>>& shapes, const std::vector<std::unique_ptr<Light>>& lights)
+void Image::render(Camera * camera, const std::vector<std::unique_ptr<Geometry>>& shapes, const std::vector<std::unique_ptr<Light>>& lights)
 {
-	float angle = glm::tan(glm::radians(camera->getFOV() * 0.5f));
+	float scale = glm::tan(glm::radians(m_imageData.m_fov * 0.5f));
 
 	for (int j = 0; j < m_imageData.m_size.x; ++j)
 	{
 		for (int i = 0; i < m_imageData.m_size.y; ++i)
 		{
-			float x = (2 * (i + 0.5) / (float)m_imageData.m_size.x - 1) * m_imageData.m_aspectRatio * angle;
-			float y = (1 - 2 * (j + 0.5) / (float)m_imageData.m_size.y) * angle;
-
+			//Calculate the direction of the ray
+			float y = (2 * (i + 0.5) / (float)m_imageData.m_size.x - 1) * m_imageData.m_aspectRatio * scale;
+			float x = (1 - 2 * (j + 0.5) / (float)m_imageData.m_size.y) * scale;
 			glm::vec3 dir = glm::normalize(glm::vec3(x, y, -1));
-			glm::vec3 colour = Ray::castRay(camera->getPos(), dir, shapes, lights, m_imageData, 0);
 
-			/*if (colour.x > 0 || colour.y > 0 || colour.z > 0)
-			{
-				std::cout << "R:" << colour.x << " G:" << colour.y << " B:" <<colour.z << std::endl;
-			}*/
-
-			putPixel(sf::Vector2u(i, j), colour);
+			//Assign colour to pixel
+			putPixel(glm::u64vec2(i, j), Ray::castRay(camera->getPos(), dir, shapes, lights, m_imageData, 0));
 		}
 	}
 
+	//Create image to render
 	std::vector<sf::Uint8> pixels;
 
 	for (auto& pixel : m_pixels)
