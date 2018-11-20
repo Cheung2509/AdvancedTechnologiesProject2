@@ -12,9 +12,9 @@ Ray::Ray(const glm::vec3 & rayOrig, const glm::vec3 & rayDir)
 {
 	m_invDirection = 1.0f / m_rayDirection;
 
-	m_sign[0] = m_invDirection.x < 0;
-	m_sign[1] = m_invDirection.y < 0;
-	m_sign[2] = m_invDirection.z < 0;
+	m_sign[0] = (m_invDirection.x < 0);
+	m_sign[1] = (m_invDirection.y < 0);
+	m_sign[2] = (m_invDirection.z < 0);
 }
 
 const bool Ray::trace(const std::vector<std::unique_ptr<Geometry>> &objects,
