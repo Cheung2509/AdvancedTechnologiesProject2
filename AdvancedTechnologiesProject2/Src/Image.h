@@ -6,6 +6,7 @@
 #include <glm/glm.hpp>
 
 #include <vector>
+#include <thread>
 
 class Geometry;
 class Light;
@@ -30,8 +31,12 @@ public:
 	void putPixel(glm::u64vec2 pos, sf::Color colour);
 	void putPixel(glm::u64vec2 pos, glm::vec3 colour);
 
-	void render(Camera* camera, const std::vector<std::unique_ptr<Geometry>>& shapes,
-				const std::vector<std::unique_ptr<Light>>& lights);
+	void render(Camera* camera, const std::vector<std::shared_ptr<Geometry>>& shapes,
+				const std::vector<std::shared_ptr<Light>>& lights);
+
+	void renderPortion(int startX, int endX, int startY, int endY, float scale, Camera* camera, 
+					   const std::vector<std::shared_ptr<Geometry>>& shapes, 
+					   const std::vector<std::shared_ptr<Light>>& lights);
 
 	bool createImage();
 
