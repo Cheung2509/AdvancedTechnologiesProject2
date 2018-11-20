@@ -3,6 +3,7 @@
 #include <fstream>
 #include <iostream>
 #include <glm/glm.hpp>
+#include <chrono>
 
 #include "Geometry.h"
 #include "Camera.h"
@@ -37,42 +38,10 @@ void Image::putPixel(glm::u64vec2 pos, glm::vec3 colour)
 	*m_pixels[(m_imageData.m_size.x * pos.x + pos.y) * 4 + 3] = 1.0f;				 
 }
 
-//void Image::createImage(Camera* camera, const std::vector<std::unique_ptr<Shape>>& shapes, 
-//						const std::vector<std::unique_ptr<Light>>& light)
-//{
-//	float invWidth = 1 / float(m_imageData.m_size.x);
-//	float invHeight = 1 / float(m_imageData.m_size.y);
-//	float angle = glm::radians(glm::angle(camera->getRotation()));
-//
-//	for (int j = 0; j < m_imageData.m_size.x; j++)
-//	{
-//		for (int i = 0; i < m_imageData.m_size.y; i++)
-//		{
-//			float x = (2 * (i + 0.5f) / (float)m_imageData.m_size.x - 1) * camera->getAspectRatio() * angle;
-//			float y = (1 - 2 * (j + 0.5f) / (float)m_imageData.m_size.y) * angle;
-//			glm::vec3 dir = glm::normalize(glm::vec3(x, y, -1) * dir);
-//			
-//
-//			putPixel(sf::Vector2u(j, i), Ray::castRay(camera->getPos(), dir, shapes));
-//		}
-//	}
-//
-//	std::vector<sf::Uint8> pixelData;
-//
-//	for (auto& pixel : m_pixels)
-//	{
-//		pixelData.push_back(glm::min(float(1), *pixel) * 255);
-//	}
-//
-//	m_image.create(m_imageData.m_size.x, m_imageData.m_size.y, pixelData.data());
-//
-//	m_texture.loadFromImage(m_image);
-//
-//	m_sprite.setTexture(m_texture);
-//}
-
-void Image::render(Camera * camera, const std::vector<std::unique_ptr<Geometry>>& shapes, const std::vector<std::unique_ptr<Light>>& lights)
+void Image::render(Camera* camera, const std::vector<std::unique_ptr<Geometry>>& shapes, const std::vector<std::unique_ptr<Light>>& lights)
 {
+	auto start = std::chrono::steady_clock::now();
+
 	float scale = glm::tan(glm::radians(m_imageData.m_fov * 0.5f));
 
 	for (int j = 0; j < m_imageData.m_size.x; ++j)
@@ -80,14 +49,29 @@ void Image::render(Camera * camera, const std::vector<std::unique_ptr<Geometry>>
 		for (int i = 0; i < m_imageData.m_size.y; ++i)
 		{
 			//Calculate the direction of the ray
-			float y = (2 * (i + 0.5) / (float)m_imageData.m_size.x - 1) * m_imageData.m_aspectRatio * scale;
-			float x = (1 - 2 * (j + 0.5) / (float)m_imageData.m_size.y) * scale;
+			float y = (float)(2 * (i + 0.5) / (float)m_imageData.m_size.x - 1) * m_imageData.m_aspectRatio * scale;
+			float x = (float)(1 - 2 * (j + 0.5) / (float)m_imageData.m_size.y) * scale;
 			glm::vec3 dir = glm::normalize(glm::vec3(x, y, -1));
 
+			Ray ray(camera->getPos(), dir);
+
 			//Assign colour to pixel
-			putPixel(glm::u64vec2(i, j), Ray::castRay(camera->getPos(), dir, shapes, lights, m_imageData, 0));
+			putPixel(glm::u64vec2(i, j), ray.castRay(shapes, lights, m_imageData, 0));
 		}
 	}
+
+	auto end = std::chrono::steady_clock::now();
+
+	std::chrono::duration<float> time = end - start;
+
+	std::cout << "Time to render:" << time.count() << std::endl;
+
+	createImage();
+}
+
+bool Image::createImage()
+{
+	auto start = std::chrono::steady_clock::now();
 
 	//Create image to render
 	std::vector<sf::Uint8> pixels;
@@ -99,9 +83,21 @@ void Image::render(Camera * camera, const std::vector<std::unique_ptr<Geometry>>
 
 	m_image.create(m_imageData.m_size.x, m_imageData.m_size.y, pixels.data());
 
-	m_texture.loadFromImage(m_image);
+	if (!m_texture.loadFromImage(m_image))
+	{
+		std::cout << "Failed to load image" << std::endl;
+		return false;
+	}
 
 	m_sprite.setTexture(m_texture);
+
+	auto end = std::chrono::steady_clock::now();
+
+	std::chrono::duration<float> time = end - start;
+
+	std::cout << "Time to create image:" << time.count() << std::endl;
+
+	return true;
 }
 
 bool Image::exportImage()

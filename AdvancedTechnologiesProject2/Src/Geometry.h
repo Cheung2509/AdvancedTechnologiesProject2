@@ -1,6 +1,9 @@
 #pragma once
 
 #include "Object.h"
+#include "AABB.h"
+
+class Ray;
 
 enum MaterialType
 {
@@ -12,12 +15,12 @@ enum MaterialType
 class Geometry : public Object
 {
 public:
-	Geometry() {};
+	Geometry() = default;
 	Geometry(const glm::vec3& col, MaterialType type = DIFFUSE_AND_GLOSSY, float ior = 1.3f, float kd = 0.8f, float ks = 0.2, 
 		  float specular = 25);
-	virtual ~Geometry() {};
+	virtual ~Geometry() = default;
 
-	virtual bool intersect(const glm::vec3 &, const glm::vec3 &, float &, std::uint64_t &, glm::vec2 &) = 0;
+	virtual bool intersect(const Ray* ray, float &, std::uint64_t &, glm::vec2 &) = 0;
 	virtual void getSurfaceData(const glm::vec3& pHit, glm::vec3& nHit, glm::vec2& tex) const = 0;
 
 	bool solveQuadratic(const float& a, const float& b, float& c, float& x0, float& x1);
@@ -28,6 +31,7 @@ public:
 	const float& getKD()  const { return m_kd; }
 	const float& getKS()  const { return m_ks; }
 	const float& getSpecularExponent() const { return m_specularExponent; }
+	const AABB& getBox() const { return m_boundingBox; }
 
 	void setIOR(const float& ior) { m_ior = ior; }
 	void setKD(const float& kd) { m_kd = kd; }
@@ -49,4 +53,6 @@ protected:
 	float m_kd;
 	float m_ks;
 	float m_specularExponent;
+
+	AABB m_boundingBox;
 };

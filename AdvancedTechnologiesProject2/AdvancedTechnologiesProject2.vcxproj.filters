@@ -756,6 +756,9 @@
     <ClInclude Include="Src\Geometry.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Src\AABB.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Src\Image.cpp">
@@ -776,7 +779,10 @@
     <ClCompile Include="Src\Ray.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Src\Shape.cpp">
+    <ClCompile Include="Src\Geometry.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\AABB.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

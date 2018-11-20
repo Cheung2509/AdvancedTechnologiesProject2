@@ -16,7 +16,7 @@ struct ImageData
 	glm::u64vec2 m_size;
 	std::uint8_t m_maxDepth = 5;
 	glm::vec3 m_backgroundColour = glm::vec3(1.0f, 1.0f, 1.0f);
-	float m_bias = 0.00001;
+	float m_bias = (float)0.00001;
 	float m_aspectRatio;
 	float m_fov;
 };
@@ -30,9 +30,10 @@ public:
 	void putPixel(glm::u64vec2 pos, sf::Color colour);
 	void putPixel(glm::u64vec2 pos, glm::vec3 colour);
 
-	//void createImage(Camera* camera, const std::vector<std::unique_ptr<Shape>>& shapes);
 	void render(Camera* camera, const std::vector<std::unique_ptr<Geometry>>& shapes,
 				const std::vector<std::unique_ptr<Light>>& lights);
+
+	bool createImage();
 
 	bool exportImage();
 	void draw(sf::RenderWindow* renderWindow);

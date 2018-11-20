@@ -150,6 +150,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Src\AABB.h" />
     <ClInclude Include="Src\Object.h" />
     <ClInclude Include="Src\Camera.h" />
     <ClInclude Include="Src\Image.h" />
@@ -399,11 +400,12 @@
     <ClInclude Include="Src\vendor\glm\vector_relational.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Src\AABB.cpp" />
     <ClCompile Include="Src\Camera.cpp" />
     <ClCompile Include="Src\Image.cpp" />
     <ClCompile Include="Src\main.cpp" />
     <ClCompile Include="Src\Ray.cpp" />
-    <ClCompile Include="Src\Shape.cpp" />
+    <ClCompile Include="Src\Geometry.cpp" />
     <ClCompile Include="Src\Sphere.cpp" />
     <ClCompile Include="Src\vendor\glm\detail\glm.cpp" />
   </ItemGroup>

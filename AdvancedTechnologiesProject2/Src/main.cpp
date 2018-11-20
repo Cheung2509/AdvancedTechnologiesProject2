@@ -26,29 +26,24 @@ int main()
 	light2->setPos(glm::vec3(0.0f, -20.0f, 0.0f));
 	lights.push_back(std::move(light2));
 
-	auto sphere = std::make_unique<Sphere>(1.0f, glm::vec3(1.0f, 0.0f, 0.0f));
+	auto sphere = std::make_unique<Sphere>(1.0f, glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, -5.0f));
 	sphere->setMaterialType(MaterialType::DIFFUSE_AND_GLOSSY);
-	sphere->setPos(glm::vec3(0.0f, 0.0f, -5.0f));
 
-	auto sphere2 = std::make_unique<Sphere>(1.0f, glm::vec3(0.0f, 1.0f, 0.0f));
+	auto sphere2 = std::make_unique<Sphere>(1.0f, glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(2.0f, 0.0f, -5.0f));
 	sphere2->setMaterialType(MaterialType::DIFFUSE_AND_GLOSSY);
-	sphere2->setPos(glm::vec3(2.0f, 0.0f, -5.0f));
 	shapes.push_back(std::move(sphere2));
 
-	auto sphere3= std::make_unique<Sphere>(1.0f, glm::vec3(0.0f, 0.0f, 1.0f));
+	auto sphere3= std::make_unique<Sphere>(1.0f, glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(-2.0f, 0.0f, -5.0f));
 	sphere3->setMaterialType(MaterialType::DIFFUSE_AND_GLOSSY);
-	sphere3->setPos(glm::vec3(-2.0f, 0.0f, -5.0f));
 	shapes.push_back(std::move(sphere3));
 
-	auto mirror = std::make_unique<Sphere>(1.0f, glm::vec3(0.0f, 1.0f, 0.0f));
+	auto mirror = std::make_unique<Sphere>(1.0f, glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 2.0f, -5.0f));
 	mirror->setMaterialType(MaterialType::REFLECTION);
-	mirror->setPos(glm::vec3(0.0f, 2.0f, -5.0f));
 	shapes.push_back(std::move(mirror));
 	
-	auto sphere4 = std::make_unique<Sphere>(1.0f, glm::vec3(0.0f, 0.0f, 1.0f));
+	auto sphere4 = std::make_unique<Sphere>(1.0f, glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, -2.0f, -5.0f));
 	sphere4->setMaterialType(MaterialType::REFLECTION_AND_REFRACTION);
 	sphere4->setSpecularExponent(25.0f);
-	sphere4->setPos(glm::vec3(0.0f, -2.0f, -5.0f));
 	shapes.push_back(std::move(sphere4));
 
 	auto camera = std::make_unique<Camera>(90, window->getSize().x / window->getSize().y,

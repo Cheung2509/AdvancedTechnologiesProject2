@@ -4,18 +4,22 @@
 
 #include <iostream>
 
-Sphere::Sphere(const float & r, const glm::vec3 & colour)
+#include "Ray.h"
+
+Sphere::Sphere(const float & r, const glm::vec3 & colour, const glm::vec3& pos)
 	:m_radius(r), m_radius2(r*r), Geometry(colour)
 {
+	m_pos = pos;
+	m_boundingBox = AABB(glm::vec3(-m_radius), glm::vec3(m_radius));
 }
 
-bool Sphere::intersect(const glm::vec3 & orig, const glm::vec3 & dir, float & tnear, std::uint64_t & index, glm::vec2 & uv)
+bool Sphere::intersect(const Ray* ray, float & tnear, std::uint64_t & index, glm::vec2 & uv)
 {
 	float t0;
 	float t1;
 
-	glm::vec3 l = m_pos - orig;
-	float tca = glm::dot(l, dir);
+	glm::vec3 l = m_pos - ray->getOrigin();
+	float tca = glm::dot(l, ray->getDirection());
 	if (tca < 0)
 	{
 		return false;

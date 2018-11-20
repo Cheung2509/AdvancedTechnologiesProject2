@@ -2,6 +2,9 @@
 
 #include <algorithm>
 
+#include "Ray.h"
+
+
 Geometry::Geometry(const glm::vec3 & col, MaterialType type, float ior, float kd, float ks, float specular)
 	:m_diffuseColour(col), m_matType(type), m_ior(ior), m_kd(kd), m_ks(ks), m_specularExponent(specular)
 {
