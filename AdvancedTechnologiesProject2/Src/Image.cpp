@@ -52,13 +52,12 @@ void Image::render(Camera* camera, const std::vector<std::shared_ptr<Geometry>>&
 
 	auto start = std::chrono::steady_clock::now();
 
-	for (size_t i(0); i < cores; i++)
+	for (size_t i(0); i < cores; ++i)
 	{
-		future_vector.emplace_back(std::async([=, &shapes, &lights, &camera]()
+		future_vector.emplace_back(std::async([=]()
 		{
-			for (size_t index(i); index < max; index += cores)
+			for (size_t index(i); i < max; index += cores)
 			{
-				index++;
 				if (index >= max)
 					break;
 				
@@ -76,23 +75,6 @@ void Image::render(Camera* camera, const std::vector<std::shared_ptr<Geometry>>&
 			
 	}
 
-	//Loop through all pixels
-	//for (int j = 0; j < m_imageData.m_size.x; ++j)
-	//{
-	//	for (int i = 0; i < m_imageData.m_size.y; ++i)
-	//	{
-	//		//Calculate the direction of the ray
-	//		float y = (float)(2 * (i + 0.5) / (float)m_imageData.m_size.x - 1) * m_imageData.m_aspectRatio * scale;
-	//		float x = (float)(1 - 2 * (j + 0.5) / (float)m_imageData.m_size.y) * scale;
-	//		glm::vec3 dir = glm::normalize(glm::vec3(x, y, -1));
-
-	//		Ray ray(camera->getPos(), dir);
-
-	//		//Assign colour to pixel
-	//		putPixel(glm::u64vec2(i, j), ray.castRay(shapes, lights, m_imageData, 0));
-	//	}
-	//}
-
 	auto end = std::chrono::steady_clock::now();
 
 	std::chrono::duration<float> time = end - start;
@@ -100,28 +82,6 @@ void Image::render(Camera* camera, const std::vector<std::shared_ptr<Geometry>>&
 	std::cout << "Time to render:" << time.count() << std::endl;
 
 	createImage();
-}
-
-void Image::renderPortion(int startX, int endX, int startY, int endY, float scale, 
-						  Camera* camera, 
-						  const std::vector<std::shared_ptr<Geometry>>& shapes, 
-						  const std::vector<std::shared_ptr<Light>>& lights)
-{
-	for (int j = startX; j < endX; j++)
-	{
-		for (int i = startY; i < endY; i++)
-		{
-		//Calculate the direction of the ray
-		float y = (float)(2 * (i + 0.5) / (float)m_imageData.m_size.x - 1) * m_imageData.m_aspectRatio * scale;
-		float x = (float)(1 - 2 * (j + 0.5) / (float)m_imageData.m_size.y) * scale;
-		glm::vec3 dir = glm::normalize(glm::vec3(x, y, -1));
-
-		Ray ray(camera->getPos(), dir);
-
-		//Assign colour to pixel
-		putPixel(glm::u64vec2(i, j), ray.castRay(shapes, lights, m_imageData, 0));
-		}
-	}
 }
 
 bool Image::createImage()
@@ -133,7 +93,7 @@ bool Image::createImage()
 
 	for (auto& pixel : m_pixels)
 	{
-		pixels.push_back(sf::Uint8(glm::min(1.0f, *pixel) * 255));
+		pixels.emplace_back(sf::Uint8(glm::min(1.0f, *pixel) * 255));
 	}
 
 	m_image.create(m_imageData.m_size.x, m_imageData.m_size.y, pixels.data());

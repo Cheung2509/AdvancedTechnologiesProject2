@@ -34,10 +34,6 @@ public:
 	void render(Camera* camera, const std::vector<std::shared_ptr<Geometry>>& shapes,
 				const std::vector<std::shared_ptr<Light>>& lights);
 
-	void renderPortion(int startX, int endX, int startY, int endY, float scale, Camera* camera, 
-					   const std::vector<std::shared_ptr<Geometry>>& shapes, 
-					   const std::vector<std::shared_ptr<Light>>& lights);
-
 	bool createImage();
 
 	bool exportImage();
