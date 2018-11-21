@@ -15,14 +15,14 @@ public:
 	Ray(const glm::vec3& rayOrig, const glm::vec3& rayDir);
 	~Ray() = default;
 
-	const bool trace(const std::vector<std::unique_ptr<Geometry>> &objects,
+	const bool trace(const std::vector<std::shared_ptr<Geometry>> &objects,
 					 float &tNear, std::uint64_t &index, glm::vec2 &uv, Geometry **hitObject);
 
 	const float mix(const float& a, const float& b, const float& mix);
 	const glm::vec3 mix(const glm::vec3& a, const glm::vec3& b, const float & mixValue);
 
-	glm::vec3 castRay(const std::vector<std::unique_ptr<Geometry>>& shapes,
-					 const std::vector<std::unique_ptr<Light>>& lights,
+	glm::vec3 castRay(const std::vector<std::shared_ptr<Geometry>>& shapes,
+					 const std::vector<std::shared_ptr<Light>>& lights,
 					 ImageData data, std::uint64_t depth, bool test = false);
 
 	glm::vec3 reflect(const glm::vec3& i, const glm::vec3& n);

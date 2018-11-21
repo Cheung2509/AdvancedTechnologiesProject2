@@ -13,48 +13,48 @@ int main()
 	std::shared_ptr<sf::RenderWindow> window = std::make_shared<sf::RenderWindow>
 		(sf::VideoMode(700, 700), "Advanced Tech Block 2");
 
-	std::vector<std::unique_ptr<Geometry>> shapes;
-	std::vector<std::unique_ptr<Light>> lights;
+	std::vector<std::shared_ptr<Geometry>> shapes;
+	std::vector<std::shared_ptr<Light>> lights;
 
-	auto light = std::make_unique<Light>();
+	auto light = std::make_shared<Light>();
 	light->setIntensity(1);
 	light->setPos(glm::vec3(0.0f, 20.0f, 0.0f));
-	lights.push_back(std::move(light));
+	lights.emplace_back(std::move(light));
 
-	auto light2 = std::make_unique<Light>();
+	auto light2 = std::make_shared<Light>();
 	light2->setIntensity(0.5f);
 	light2->setPos(glm::vec3(0.0f, -20.0f, 0.0f));
-	lights.push_back(std::move(light2));
+	lights.emplace_back(std::move(light2));
 
-	auto sphere = std::make_unique<Sphere>(1.0f, glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, -5.0f));
+	auto sphere = std::make_shared<Sphere>(1.0f, glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, -5.0f));
 	sphere->setMaterialType(MaterialType::DIFFUSE_AND_GLOSSY);
 
-	auto sphere2 = std::make_unique<Sphere>(1.0f, glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(2.0f, 0.0f, -5.0f));
+	auto sphere2 = std::make_shared<Sphere>(1.0f, glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(2.0f, 0.0f, -5.0f));
 	sphere2->setMaterialType(MaterialType::DIFFUSE_AND_GLOSSY);
-	shapes.push_back(std::move(sphere2));
+	shapes.emplace_back(std::move(sphere2));
 
-	auto sphere3= std::make_unique<Sphere>(1.0f, glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(-2.0f, 0.0f, -5.0f));
+	auto sphere3= std::make_shared<Sphere>(1.0f, glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(-2.0f, 0.0f, -5.0f));
 	sphere3->setMaterialType(MaterialType::DIFFUSE_AND_GLOSSY);
-	shapes.push_back(std::move(sphere3));
+	shapes.emplace_back(std::move(sphere3));
 
-	auto mirror = std::make_unique<Sphere>(1.0f, glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 2.0f, -5.0f));
-	mirror->setMaterialType(MaterialType::REFLECTION);
-	shapes.push_back(std::move(mirror));
-	
-	auto sphere4 = std::make_unique<Sphere>(1.0f, glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, -2.0f, -5.0f));
-	sphere4->setMaterialType(MaterialType::REFLECTION_AND_REFRACTION);
+	auto sphere4 = std::make_shared<Sphere>(1.0f, glm::vec3(0.75f, 0.75f, 0.75f), glm::vec3(2.0f, -2.0f, -5.0f));
+	sphere4->setMaterialType(MaterialType::DIFFUSE_AND_GLOSSY);
 	sphere4->setSpecularExponent(25.0f);
-	shapes.push_back(std::move(sphere4));
+	shapes.emplace_back(std::move(sphere4));
+
+	auto sphere5 = std::make_shared<Sphere>(1.0f, glm::vec3(0.5f, 0.5f, 0.5f), glm::vec3(-2.0f, -2.0f, -5.0f));
+	sphere5->setMaterialType(MaterialType::DIFFUSE_AND_GLOSSY);
+	shapes.emplace_back(std::move(sphere5));
 
 	auto camera = std::make_unique<Camera>(90, window->getSize().x / window->getSize().y,
 															  glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 	camera->setPos(glm::vec3(0.0f, 0.0f, 0.0f));
 	
-	shapes.push_back(std::move(sphere));
+	shapes.emplace_back(std::move(sphere));
 	
-	Image image = Image(camera.get(), window->getSize().x, window->getSize().y);
+	auto image = new Image(camera.get(), window->getSize().x, window->getSize().y);
 
-	image.render(camera.get(), shapes, lights);
+	image->render(camera.get(), shapes, lights);
 
     while (window->isOpen())
     {
@@ -68,15 +68,17 @@ int main()
 			{
 				if (sf::Keyboard::isKeyPressed(sf::Keyboard::Space))
 				{
-					image.exportImage();
+					image->exportImage();
 				}
 			}
         }
 
         window->clear();
-		image.draw(window.get());
+		image->draw(window.get());
         window->display();
     }
+
+	delete image;
 
 	return 0;
 }

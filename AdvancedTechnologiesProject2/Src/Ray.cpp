@@ -17,7 +17,7 @@ Ray::Ray(const glm::vec3 & rayOrig, const glm::vec3 & rayDir)
 	m_sign[2] = (m_invDirection.z < 0);
 }
 
-const bool Ray::trace(const std::vector<std::unique_ptr<Geometry>> &objects,
+const bool Ray::trace(const std::vector<std::shared_ptr<Geometry>> &objects,
 						float &tNear, std::uint64_t &index, glm::vec2 &uv, Geometry **hitObject)
 {
 	*hitObject = nullptr;
@@ -53,8 +53,8 @@ const glm::vec3 Ray::mix(const glm::vec3 & a, const glm::vec3 & b, const float &
 	return a * (1 - mixValue) + b * mixValue;
 }
 
-glm::vec3 Ray::castRay(const std::vector<std::unique_ptr<Geometry>>& shapes,
-					   const std::vector<std::unique_ptr<Light>>& lights, 
+glm::vec3 Ray::castRay(const std::vector<std::shared_ptr<Geometry>>& shapes,
+					   const std::vector<std::shared_ptr<Light>>& lights,
 					   ImageData data, std::uint64_t depth, bool test)
 {
 	if (depth > data.m_maxDepth)

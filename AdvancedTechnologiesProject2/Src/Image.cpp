@@ -4,10 +4,14 @@
 #include <iostream>
 #include <glm/glm.hpp>
 #include <chrono>
+#include <thread>
+#include <atomic>
+#include <future>
 
 #include "Geometry.h"
 #include "Camera.h"
 #include "Ray.h"
+#include "Light.h"
 
 Image::Image(Camera* camera, unsigned int sizeX, unsigned int sizeY)
 {
@@ -16,11 +20,6 @@ Image::Image(Camera* camera, unsigned int sizeX, unsigned int sizeY)
 	m_imageData.m_fov = camera->getFOV();
 
 	m_pixels.reserve(m_imageData.m_size.x * m_imageData.m_size.y * 4);
-	
-	for (int i = 0; i < m_imageData.m_size.x * m_imageData.m_size.y * 4; i++)
-	{
-		m_pixels.emplace_back(new float(0.0f));
-	}
 }
 
 void Image::putPixel(glm::u64vec2 pos, sf::Color colour)
@@ -38,26 +37,51 @@ void Image::putPixel(glm::u64vec2 pos, glm::vec3 colour)
 	*m_pixels[(m_imageData.m_size.x * pos.x + pos.y) * 4 + 3] = 1.0f;				 
 }
 
-void Image::render(Camera* camera, const std::vector<std::unique_ptr<Geometry>>& shapes, const std::vector<std::unique_ptr<Light>>& lights)
+void Image::render(Camera* camera, const std::vector<std::shared_ptr<Geometry>>& shapes, const std::vector<std::shared_ptr<Light>>& lights)
 {
-	auto start = std::chrono::steady_clock::now();
-
 	float scale = glm::tan(glm::radians(m_imageData.m_fov * 0.5f));
 
-	for (int j = 0; j < m_imageData.m_size.x; ++j)
+	size_t cores = std::thread::hardware_concurrency();
+	size_t max = m_imageData.m_size.x * m_imageData.m_size.y;
+	std::vector<std::future<void>> future_vector;
+
+	auto start = std::chrono::steady_clock::now();
+
+	/*Pushback all pixels*/
+	for (int i = 0; i < m_imageData.m_size.x * m_imageData.m_size.y * 4; i++)
 	{
-		for (int i = 0; i < m_imageData.m_size.y; ++i)
+		m_pixels.emplace_back(new float(0.0f));
+	}
+
+	//Assign pixels to render for each thread
+	for (size_t i = 0; i < cores; ++i)
+	{
+		future_vector.emplace_back(std::async([=]()
 		{
-			//Calculate the direction of the ray
-			float y = (float)(2 * (i + 0.5) / (float)m_imageData.m_size.x - 1) * m_imageData.m_aspectRatio * scale;
-			float x = (float)(1 - 2 * (j + 0.5) / (float)m_imageData.m_size.y) * scale;
-			glm::vec3 dir = glm::normalize(glm::vec3(x, y, -1));
+			for (size_t index = i; i < max; index += cores)
+			{
+				if (index > max)
+					break;
 
-			Ray ray(camera->getPos(), dir);
+				size_t  i = index % m_imageData.m_size.x;
+				size_t j = index / m_imageData.m_size.x;
 
-			//Assign colour to pixel
-			putPixel(glm::u64vec2(i, j), ray.castRay(shapes, lights, m_imageData, 0));
-		}
+				float y = (float)(2 * (i + 0.5) / (float)m_imageData.m_size.x - 1) * m_imageData.m_aspectRatio * scale;
+				float x = (float)(1 - 2 * (j + 0.5) / (float)m_imageData.m_size.y) * scale;
+				Ray ray(camera->getPos(), glm::normalize(glm::vec3(x, y, -1)));
+				glm::vec3 colour = ray.castRay(shapes, lights, m_imageData, 0);
+			
+				//Assign colour to pixel
+				putPixel(glm::u64vec2(i, j), ray.castRay(shapes, lights, m_imageData, 0));
+			}
+		}));
+			
+	}
+
+	//Wait all threads to be done
+	for (auto& thread : future_vector)
+	{
+		thread.wait();
 	}
 
 	auto end = std::chrono::steady_clock::now();
@@ -78,7 +102,7 @@ bool Image::createImage()
 
 	for (auto& pixel : m_pixels)
 	{
-		pixels.push_back(sf::Uint8(glm::min(1.0f, *pixel) * 255));
+		pixels.emplace_back(sf::Uint8(glm::min(1.0f, *pixel) * 255));
 	}
 
 	m_image.create(m_imageData.m_size.x, m_imageData.m_size.y, pixels.data());

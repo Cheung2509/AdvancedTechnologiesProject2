@@ -3,6 +3,8 @@
 #include "Object.h"
 #include "AABB.h"
 
+#include <memory>
+
 class Ray;
 
 enum MaterialType
