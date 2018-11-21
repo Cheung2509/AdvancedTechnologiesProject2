@@ -20,11 +20,6 @@ Image::Image(Camera* camera, unsigned int sizeX, unsigned int sizeY)
 	m_imageData.m_fov = camera->getFOV();
 
 	m_pixels.reserve(m_imageData.m_size.x * m_imageData.m_size.y * 4);
-	
-	for (int i = 0; i < m_imageData.m_size.x * m_imageData.m_size.y * 4; i++)
-	{
-		m_pixels.emplace_back(new float(0.0f));
-	}
 }
 
 void Image::putPixel(glm::u64vec2 pos, sf::Color colour)
@@ -52,27 +47,41 @@ void Image::render(Camera* camera, const std::vector<std::shared_ptr<Geometry>>&
 
 	auto start = std::chrono::steady_clock::now();
 
-	for (size_t i(0); i < cores; ++i)
+	/*Pushback all pixels*/
+	for (int i = 0; i < m_imageData.m_size.x * m_imageData.m_size.y * 4; i++)
+	{
+		m_pixels.emplace_back(new float(0.0f));
+	}
+
+	//Assign pixels to render for each thread
+	for (size_t i = 0; i < cores; ++i)
 	{
 		future_vector.emplace_back(std::async([=]()
 		{
-			for (size_t index(i); i < max; index += cores)
+			for (size_t index = i; i < max; index += cores)
 			{
-				if (index >= max)
+				if (index > max)
 					break;
-				
-				unsigned int i = index % m_imageData.m_size.x;
-				unsigned int j = index / m_imageData.m_size.x;
+
+				size_t  i = index % m_imageData.m_size.x;
+				size_t j = index / m_imageData.m_size.x;
 
 				float y = (float)(2 * (i + 0.5) / (float)m_imageData.m_size.x - 1) * m_imageData.m_aspectRatio * scale;
 				float x = (float)(1 - 2 * (j + 0.5) / (float)m_imageData.m_size.y) * scale;
 				Ray ray(camera->getPos(), glm::normalize(glm::vec3(x, y, -1)));
-
+				glm::vec3 colour = ray.castRay(shapes, lights, m_imageData, 0);
+			
 				//Assign colour to pixel
 				putPixel(glm::u64vec2(i, j), ray.castRay(shapes, lights, m_imageData, 0));
 			}
 		}));
 			
+	}
+
+	//Wait all threads to be done
+	for (auto& thread : future_vector)
+	{
+		thread.wait();
 	}
 
 	auto end = std::chrono::steady_clock::now();
