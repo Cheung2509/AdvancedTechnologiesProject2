@@ -26,7 +26,7 @@ class Image
 {
 public:
 	Image(Camera* camera, unsigned int sizeX = 640, unsigned int sizeY = 480);
-	~Image() = default;
+	~Image();
 
 	void putPixel(glm::u64vec2 pos, sf::Color colour);
 	void putPixel(glm::u64vec2 pos, glm::vec3 colour);

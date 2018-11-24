@@ -21,15 +21,11 @@ bool Sphere::intersect(const Ray* ray, float & tnear, std::uint64_t & index, glm
 	glm::vec3 l = m_pos - ray->getOrigin();
 	float tca = glm::dot(l, ray->getDirection());
 	if (tca < 0)
-	{
 		return false;
-	}
 
 	float d2 = glm::dot(l, l) - tca * tca;
 	if (d2 > m_radius2)
-	{
 		return false;
-	}
 
 	float thc = glm::sqrt(m_radius2 - d2);
 	t0 = tca - thc;

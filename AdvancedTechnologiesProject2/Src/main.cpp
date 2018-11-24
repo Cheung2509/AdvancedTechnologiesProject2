@@ -7,6 +7,7 @@
 #include "Camera.h"
 #include "Sphere.h"
 #include "Light.h"
+#include "BoundingVolumeHierachy.h"
 
 int main()
 {   
@@ -18,22 +19,18 @@ int main()
 
 	auto light = std::make_shared<Light>();
 	light->setIntensity(1);
-	light->setPos(glm::vec3(0.0f, 20.0f, 0.0f));
+	light->setPos(glm::vec3(0.0f, 10.0f, -4.0f));
 	lights.emplace_back(std::move(light));
 
-	auto light2 = std::make_shared<Light>();
-	light2->setIntensity(0.5f);
-	light2->setPos(glm::vec3(0.0f, -20.0f, 0.0f));
-	lights.emplace_back(std::move(light2));
-
-	auto sphere = std::make_shared<Sphere>(1.0f, glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, -5.0f));
+	auto sphere = std::make_shared<Sphere>(1.0f, glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, -6.0f));
 	sphere->setMaterialType(MaterialType::DIFFUSE_AND_GLOSSY);
-
-	auto sphere2 = std::make_shared<Sphere>(1.0f, glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(2.0f, 0.0f, -5.0f));
+	shapes.emplace_back(std::move(sphere));
+	
+	auto sphere2 = std::make_shared<Sphere>(1.0f, glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(2.0f, 0.0f, -5.0f));
 	sphere2->setMaterialType(MaterialType::DIFFUSE_AND_GLOSSY);
 	shapes.emplace_back(std::move(sphere2));
 
-	auto sphere3= std::make_shared<Sphere>(1.0f, glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(-2.0f, 0.0f, -5.0f));
+	auto sphere3= std::make_shared<Sphere>(1.0f, glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(-2.0f, 0.0f, -4.0f));
 	sphere3->setMaterialType(MaterialType::DIFFUSE_AND_GLOSSY);
 	shapes.emplace_back(std::move(sphere3));
 
@@ -42,15 +39,18 @@ int main()
 	sphere4->setSpecularExponent(25.0f);
 	shapes.emplace_back(std::move(sphere4));
 
-	auto sphere5 = std::make_shared<Sphere>(1.0f, glm::vec3(0.5f, 0.5f, 0.5f), glm::vec3(-2.0f, -2.0f, -5.0f));
+	/*auto sphere5 = std::make_shared<Sphere>(1.0f, glm::vec3(0.5f, 0.5f, 0.5f), glm::vec3(-2.0f, -2.0f, -5.0f));
 	sphere5->setMaterialType(MaterialType::DIFFUSE_AND_GLOSSY);
-	shapes.emplace_back(std::move(sphere5));
+	shapes.emplace_back(std::move(sphere5));*/
 
 	auto camera = std::make_unique<Camera>(90, window->getSize().x / window->getSize().y,
 															  glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 	camera->setPos(glm::vec3(0.0f, 0.0f, 0.0f));
+
+	BVH bvh;
+	bvh.build(shapes);
 	
-	shapes.emplace_back(std::move(sphere));
+	
 	
 	auto image = new Image(camera.get(), window->getSize().x, window->getSize().y);
 

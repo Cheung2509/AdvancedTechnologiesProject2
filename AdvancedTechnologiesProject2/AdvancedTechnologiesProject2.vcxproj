@@ -151,6 +151,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Src\AABB.h" />
+    <ClInclude Include="Src\BoundingVolumeHierachy.h" />
+    <ClInclude Include="Src\BVHNode.h" />
+    <ClInclude Include="Src\ComparePrimitives.h" />
     <ClInclude Include="Src\Object.h" />
     <ClInclude Include="Src\Camera.h" />
     <ClInclude Include="Src\Image.h" />
@@ -401,7 +404,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Src\AABB.cpp" />
+    <ClCompile Include="Src\BoundingVolumeHierachy.cpp" />
+    <ClCompile Include="Src\BVHNode.cpp" />
     <ClCompile Include="Src\Camera.cpp" />
+    <ClCompile Include="Src\ComparePrimitives.cpp" />
     <ClCompile Include="Src\Image.cpp" />
     <ClCompile Include="Src\main.cpp" />
     <ClCompile Include="Src\Ray.cpp" />

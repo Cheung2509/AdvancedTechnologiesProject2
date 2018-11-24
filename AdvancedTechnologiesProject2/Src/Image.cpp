@@ -4,7 +4,6 @@
 #include <iostream>
 #include <glm/glm.hpp>
 #include <chrono>
-#include <thread>
 #include <atomic>
 #include <future>
 
@@ -20,6 +19,16 @@ Image::Image(Camera* camera, unsigned int sizeX, unsigned int sizeY)
 	m_imageData.m_fov = camera->getFOV();
 
 	m_pixels.reserve(m_imageData.m_size.x * m_imageData.m_size.y * 4);
+}
+
+Image::~Image()
+{
+	for (auto& pixel : m_pixels)
+	{
+		delete pixel;
+	}
+
+	m_pixels.shrink_to_fit();
 }
 
 void Image::putPixel(glm::u64vec2 pos, sf::Color colour)
@@ -39,7 +48,7 @@ void Image::putPixel(glm::u64vec2 pos, glm::vec3 colour)
 
 void Image::render(Camera* camera, const std::vector<std::shared_ptr<Geometry>>& shapes, const std::vector<std::shared_ptr<Light>>& lights)
 {
-	bool threading = false;
+	bool threading = true;
 
 	float scale = glm::tan(glm::radians(m_imageData.m_fov * 0.5f));
 
