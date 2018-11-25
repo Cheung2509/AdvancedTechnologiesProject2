@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <stack>
+#include <iostream>
 
 #include "BVHNode.h"
 #include "Geometry.h"
@@ -9,6 +10,7 @@
 
 void BVH::buildBVH(std::vector<std::shared_ptr<Geometry>> shapes)
 {
+	auto start = std::chrono::steady_clock::now();
 	m_shapes = shapes;
 
 	m_rootNode = std::make_shared<BVHNode>();
@@ -30,11 +32,17 @@ void BVH::buildBVH(std::vector<std::shared_ptr<Geometry>> shapes)
 	m_rootNode->setBounds(worldBox);
 	m_rootNode->createNode(0, m_shapes.size());
 	buildRecursiveBVH(0, m_shapes.size(), m_rootNode, 0, axis);
+
+	auto end = std::chrono::steady_clock::now();
+
+	std::chrono::duration<float> time = end - start;
+
+	std::cout << "Time to build BVH: " << time.count() << std::endl;
 }
 
 void BVH::buildRecursiveBVH(int leftIndex, int rightIndex, std::shared_ptr<BVHNode> node, int depth, Axis& axis)
 {
-	if ((rightIndex - leftIndex) <= 4 || depth >= 5)
+	if ((rightIndex - leftIndex) <= 4)
 	{
 		node->createLeaf(leftIndex, rightIndex);
 	}
@@ -101,8 +109,8 @@ void BVH::buildRecursiveBVH(int leftIndex, int rightIndex, std::shared_ptr<BVHNo
 		rightNode->setBounds(AABB(min, max));
 		rightNode->createNode(splitIndex, rightIndex);
 
-		m_rootNode->setLeft(leftNode);
-		m_rootNode->setRight(rightNode);
+		node->setLeft(leftNode);
+		node->setRight(rightNode);
 
 
 
@@ -113,6 +121,135 @@ void BVH::buildRecursiveBVH(int leftIndex, int rightIndex, std::shared_ptr<BVHNo
 
 void BVH::buildSAH(std::vector<std::shared_ptr<Geometry>> shapes)
 {
+	auto start = std::chrono::steady_clock::now();
+
+	m_shapes = shapes;
+	m_rootNode = std::make_shared<BVHNode>();
+
+	glm::vec3 min(0);
+	glm::vec3 max(0);
+
+	Axis axis = Axis::X;
+	ComparePrimitives cmp(static_cast<Axis>(axis));
+	std::sort(m_shapes.begin(), m_shapes.end(), cmp);
+
+	for (auto& obj : shapes)
+	{
+		min = glm::min(obj->getBox().getMin(), min);
+		max = glm::max(obj->getBox().getMax(), max);
+	}
+
+	AABB worldBox(min, max);
+	m_rootNode->setBounds(worldBox);
+	m_rootNode->createNode(0, m_shapes.size());
+	buildRecursiveSAH(0, m_shapes.size(), m_rootNode, 0, axis);
+
+
+	auto end = std::chrono::steady_clock::now();
+
+	std::chrono::duration<float> time = end - start;
+
+	std::cout << "Time to build SAH: " << time.count() << std::endl;
+}
+
+void BVH::buildRecursiveSAH(int leftIndex, int rightIndex, std::shared_ptr<BVHNode> node, int depth, Axis& axis)
+{
+	if ((rightIndex - leftIndex) <= 4)
+	{
+		node->createLeaf(leftIndex, rightIndex);
+	}
+	else
+	{
+		float pSA = node->getBounds().getSurfaceArea();
+		float pCI = node->getNumberOfObjects() * pSA * 1.0f;
+
+		float ci;
+
+		int splitIndex = 0;
+
+		auto leftNode = std::make_shared<BVHNode>();
+		AABB leftBounds;
+		auto rightNode = std::make_shared<BVHNode>();
+		AABB rightBounds;
+
+		Axis axis = Axis::X;
+
+		float cost = 0.0f;
+
+		do
+		{
+			int rNumberOfObj = 0;
+			int lNumberOfObj = 0;
+
+			glm::vec3 lmin;
+			glm::vec3 lmax;
+			glm::vec3 rmin;
+			glm::vec3 rmax;
+
+			ComparePrimitives cmp(static_cast<Axis>(axis));
+
+			std::sort(m_shapes.begin() + leftIndex, m_shapes.begin() + splitIndex, cmp);
+			for (int i = leftIndex; i < splitIndex; i++)
+			{
+				lmin = glm::min(m_shapes[i]->getBox().getMin(), lmin);
+				lmax = glm::max(m_shapes[i]->getBox().getMax(), lmax);
+				lNumberOfObj++;
+			}
+
+			std::sort(m_shapes.begin() + splitIndex, m_shapes.begin() + rightIndex, cmp);
+			for (int i = splitIndex; i < rightIndex; i++)
+			{
+				rmin = glm::min(m_shapes[splitIndex + i]->getBox().getMin(), lmin);
+				rmax = glm::max(m_shapes[splitIndex + i]->getBox().getMax(), lmax);
+				rNumberOfObj++;
+			}
+
+			AABB leftBox(lmin, lmax);
+			AABB rightBox(rmin, rmax);
+
+			cost = calculateCost(1.0f, 2.0f, lNumberOfObj, rNumberOfObj,  
+								 leftBox.getSurfaceArea(), rightBox.getSurfaceArea(), pSA);
+			
+			if (cost > pCI)
+			{
+				leftBounds = leftBox;
+				rightBounds = rightBox;
+			}
+			else
+			{
+				splitIndex++;
+			}
+		} while (cost > pCI);
+		
+		switch (axis)
+		{
+		case Axis::X:
+			axis = Axis::Y;
+			break;
+		case Axis::Y:
+			axis = Axis::Z;
+			break;
+		case Axis::Z:
+			axis = Axis::X;
+			break;
+		}
+
+		leftNode->createNode(leftIndex, splitIndex);
+		leftNode->setBounds(leftBounds);
+		rightNode->createNode(splitIndex, rightIndex);
+		rightNode->setBounds(rightBounds);
+		
+		node->setRight(rightNode);
+		node->setLeft(leftNode);
+
+		buildRecursiveSAH(leftIndex, splitIndex, leftNode, depth + 1, axis);
+		buildRecursiveSAH(leftIndex, splitIndex, leftNode, depth + 1, axis);
+	}
+}
+
+const float & BVH::calculateCost(const float & ct, const float & ci, const int & nl, const int & nr, const float & saL, const float & saR, const float & saP)
+{
+	return ct + ((saL / saP) * nl * ci) + ((saR / saP)* nr * ci);
 }
 
 bool BVH::checkIntersection(Ray * ray, std::shared_ptr<Geometry>& hitObj, std::uint64_t & index, glm::vec2 & uv)

@@ -30,7 +30,7 @@ int main()
 	std::uniform_real<float> y(-50, 50);
 	std::uniform_real<float> col(0, 1.0f);
 
-	for (int i = 0; i < 1000; i++)
+	for (int i = 0; i < 2000; i++)
 	{
 		auto sphere = std::make_shared<Sphere>(1.0f, glm::vec3(col(rng), col(rng), col(rng)),
 											   glm::vec3(x(rng), y(rng), z(rng)));
@@ -43,7 +43,7 @@ int main()
 	camera->setPos(glm::vec3(0.0f, 0.0f, 0.0f));
 
 	auto bvh = std::make_shared<BVH>();
-	bvh->build(shapes);
+	bvh->buildSAH(shapes);
 	
 	auto image = new Image(camera.get(), window->getSize().x, window->getSize().y);
 

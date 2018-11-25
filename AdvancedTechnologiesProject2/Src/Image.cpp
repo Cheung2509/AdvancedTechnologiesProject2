@@ -20,18 +20,10 @@ Image::Image(Camera* camera, unsigned int sizeX, unsigned int sizeY)
 
 	m_pixels.reserve(m_imageData.m_size.x * m_imageData.m_size.y);
 
-	auto start = std::chrono::steady_clock::now();
-
 	for (int i = 0; i < m_imageData.m_size.x * m_imageData.m_size.y; i++)
 	{
 		m_pixels.push_back(std::make_shared<glm::vec4>(0.0f));
 	}
-
-	auto end = std::chrono::steady_clock::now();
-
-	std::chrono::duration<float> time = end - start;
-
-	std::cout << "Time to push back all pixels:" << time.count() << std::endl;
 
 	m_image = new sf::Image();
 	m_image.load()->create(m_imageData.m_size.x, m_imageData.m_size.y);
@@ -150,18 +142,16 @@ bool Image::createImage()
 {
 	auto start = std::chrono::steady_clock::now();
 
-	//Create image to render
-	std::vector<sf::Uint8> pixels;
+	////Create image to render
+	//std::vector<sf::Uint8> pixels;
 
-	for (auto& pixel : m_pixels)
-	{
-		pixels.emplace_back(sf::Uint8(glm::min(1.0f, pixel->r) * 255));
-		pixels.emplace_back(sf::Uint8(glm::min(1.0f, pixel->g) * 255));
-		pixels.emplace_back(sf::Uint8(glm::min(1.0f, pixel->b) * 255));
-		pixels.emplace_back(sf::Uint8(glm::min(1.0f, pixel->a) * 255));
-	}
-
-	m_image.load()->create(m_imageData.m_size.x, m_imageData.m_size.y, pixels.data());
+	//for (auto& pixel : m_pixels)
+	//{
+	//	pixels.emplace_back(sf::Uint8(glm::min(1.0f, pixel->r) * 255));
+	//	pixels.emplace_back(sf::Uint8(glm::min(1.0f, pixel->g) * 255));
+	//	pixels.emplace_back(sf::Uint8(glm::min(1.0f, pixel->b) * 255));
+	//	pixels.emplace_back(sf::Uint8(glm::min(1.0f, pixel->a) * 255));
+	//}
 
 	if (!m_texture.loadFromImage(*m_image.load()))
 	{
@@ -175,7 +165,7 @@ bool Image::createImage()
 
 	std::chrono::duration<float> time = end - start;
 
-	std::cout << "Time to create image:" << time.count() << std::endl;
+	//std::cout << "Time to create image:" << time.count() << std::endl;
 
 	return true;
 }

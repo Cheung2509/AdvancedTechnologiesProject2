@@ -18,6 +18,7 @@ public:
 
 	const glm::vec3& getMin() const { return m_bounds[0]; }
 	const glm::vec3& getMax() const { return m_bounds[1]; }
+	const float& getSurfaceArea() const;
 private: 
 	glm::vec3 m_bounds[2];
 };

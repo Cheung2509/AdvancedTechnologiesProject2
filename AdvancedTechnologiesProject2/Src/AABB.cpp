@@ -78,3 +78,12 @@ bool AABB::checkRayCollision(const Ray * ray, float & t) const
 
 	return true;
 }
+
+const float & AABB::getSurfaceArea() const
+{
+	float l = glm::abs(m_bounds[0].z - m_bounds[1].z);
+	float w = glm::abs(m_bounds[0].x - m_bounds[1].x);
+	float h = glm::abs(m_bounds[0].y - m_bounds[1].y);
+
+	return 2 * ((l * w) + (l * h) + (w * h));
+}
