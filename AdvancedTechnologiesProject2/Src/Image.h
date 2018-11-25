@@ -30,8 +30,7 @@ public:
 	Image(Camera* camera, unsigned int sizeX = 640, unsigned int sizeY = 480);
 	~Image() = default;
 
-	void putPixel(glm::u64vec2 pos, sf::Color colour);
-	void putPixel(glm::u64vec2 pos, glm::vec3 colour);
+	void putPixel(glm::u64vec2 pos, glm::vec4 colour);
 
 	void render(Camera* camera, const std::vector<std::shared_ptr<Geometry>>& shapes,
 				const std::vector<std::shared_ptr<Light>>& lights);
@@ -46,7 +45,7 @@ public:
 	const glm::u64vec2& getSize() const { return m_imageData.m_size; }
 private:
 	ImageData m_imageData;
-	std::vector<std::shared_ptr<float>> m_pixels;
+	std::vector<std::shared_ptr<glm::vec4>> m_pixels;
 
 	std::atomic<sf::Image*> m_image;
 	sf::Texture m_texture;

@@ -7,7 +7,7 @@
 #include "Geometry.h"
 #include "Ray.h"
 
-void BVH::build(std::vector<std::shared_ptr<Geometry>> shapes)
+void BVH::buildBVH(std::vector<std::shared_ptr<Geometry>> shapes)
 {
 	m_shapes = shapes;
 
@@ -29,10 +29,10 @@ void BVH::build(std::vector<std::shared_ptr<Geometry>> shapes)
 	AABB worldBox(min, max);
 	m_rootNode->setBounds(worldBox);
 	m_rootNode->createNode(0, m_shapes.size());
-	buildRecursive(0, m_shapes.size(), m_rootNode, 0, axis);
+	buildRecursiveBVH(0, m_shapes.size(), m_rootNode, 0, axis);
 }
 
-void BVH::buildRecursive(int leftIndex, int rightIndex, std::shared_ptr<BVHNode> node, int depth, Axis& axis)
+void BVH::buildRecursiveBVH(int leftIndex, int rightIndex, std::shared_ptr<BVHNode> node, int depth, Axis& axis)
 {
 	if ((rightIndex - leftIndex) <= 4 || depth >= 5)
 	{
@@ -106,9 +106,13 @@ void BVH::buildRecursive(int leftIndex, int rightIndex, std::shared_ptr<BVHNode>
 
 
 
-		buildRecursive(leftIndex, splitIndex, leftNode, depth + 1, axis);
-		buildRecursive(splitIndex, rightIndex, rightNode, depth + 1, axis);
+		buildRecursiveBVH(leftIndex, splitIndex, leftNode, depth + 1, axis);
+		buildRecursiveBVH(splitIndex, rightIndex, rightNode, depth + 1, axis);
 	}
+}
+
+void BVH::buildSAH(std::vector<std::shared_ptr<Geometry>> shapes)
+{
 }
 
 bool BVH::checkIntersection(Ray * ray, std::shared_ptr<Geometry>& hitObj, std::uint64_t & index, glm::vec2 & uv)

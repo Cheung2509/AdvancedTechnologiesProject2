@@ -23,8 +23,10 @@ public:
 	BVH() = default;
 	~BVH() = default;
 
-	void build(std::vector<std::shared_ptr<Geometry>> shapes);
-	void buildRecursive(int leftIndex, int rightIndex, std::shared_ptr<BVHNode> node, int depth, Axis& axis);
+	void buildBVH(std::vector<std::shared_ptr<Geometry>> shapes);
+	void buildRecursiveBVH(int leftIndex, int rightIndex, std::shared_ptr<BVHNode> node, int depth, Axis& axis);
+
+	void buildSAH(std::vector<std::shared_ptr<Geometry>> shapes);
 
 	bool checkIntersection(Ray* ray, std::shared_ptr<Geometry>& hitObj, std::uint64_t& index, glm::vec2& uv);
 private:
