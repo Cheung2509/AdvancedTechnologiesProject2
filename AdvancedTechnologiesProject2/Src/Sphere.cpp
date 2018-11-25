@@ -10,10 +10,10 @@ Sphere::Sphere(const float & r, const glm::vec3 & colour, const glm::vec3& pos)
 	:m_radius(r), m_radius2(r*r), Geometry(colour)
 {
 	m_pos = pos;
-	m_boundingBox = AABB(glm::vec3(-m_radius), glm::vec3(m_radius));
+	m_boundingBox = AABB(glm::vec3(-m_radius) + m_pos, glm::vec3(m_radius) + m_pos);
 }
 
-bool Sphere::intersect(const Ray* ray, float & tnear, std::uint64_t & index, glm::vec2 & uv)
+bool Sphere::intersect(Ray* ray, std::uint64_t & index, glm::vec2 & uv)
 {
 	float t0;
 	float t1;
@@ -21,15 +21,11 @@ bool Sphere::intersect(const Ray* ray, float & tnear, std::uint64_t & index, glm
 	glm::vec3 l = m_pos - ray->getOrigin();
 	float tca = glm::dot(l, ray->getDirection());
 	if (tca < 0)
-	{
 		return false;
-	}
 
 	float d2 = glm::dot(l, l) - tca * tca;
 	if (d2 > m_radius2)
-	{
 		return false;
-	}
 
 	float thc = glm::sqrt(m_radius2 - d2);
 	t0 = tca - thc;
@@ -49,7 +45,10 @@ bool Sphere::intersect(const Ray* ray, float & tnear, std::uint64_t & index, glm
 		}
 	}
 
-	tnear = t0;
+	if (t0 < ray->getClosestHit())
+	{
+		ray->setHit(t0);
+	}
 
 	return true;
 }
