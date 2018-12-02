@@ -54,7 +54,7 @@ private:
 	unsigned int m_depth;
 	std::uint64_t m_index = 0;
 
-	std::shared_ptr<Geometry> m_hitObject = nullptr;
+	Geometry* m_hitObject = nullptr;
 
 	int m_sign[3];
 };

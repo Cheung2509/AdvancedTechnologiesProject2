@@ -161,6 +161,7 @@
     <ClInclude Include="Src\Ray.h" />
     <ClInclude Include="Src\Geometry.h" />
     <ClInclude Include="Src\Sphere.h" />
+    <ClInclude Include="Src\Triangle.h" />
     <ClInclude Include="Src\vendor\glm\common.hpp" />
     <ClInclude Include="Src\vendor\glm\detail\compute_common.hpp" />
     <ClInclude Include="Src\vendor\glm\detail\compute_vector_relational.hpp" />

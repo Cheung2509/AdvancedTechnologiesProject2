@@ -3,6 +3,7 @@
 #include <memory>
 #include <iostream>
 #include <random>
+#include <chrono>
 
 #include "Image.h"
 #include "Camera.h"
@@ -25,29 +26,42 @@ int main()
 
 	std::random_device rd;
 	std::mt19937 rng(rd());
-	std::uniform_real<float> x(-50, 50);
-	std::uniform_real<float> z(-50, 50);
-	std::uniform_real<float> y(-50, 50);
+	std::uniform_real<float> x(-20, 20);
+	std::uniform_real<float> z(-30, -20);
+	std::uniform_real<float> y(-20, 20);
 	std::uniform_real<float> col(0, 1.0f);
 
-	for (int i = 0; i < 2000; i++)
+	for (int i = 0; i < 1000; i++)
 	{
-		auto sphere = std::make_shared<Sphere>(1.0f, glm::vec3(col(rng), col(rng), col(rng)),
-											   glm::vec3(x(rng), y(rng), z(rng)));
+		auto sphere = std::make_shared<Sphere>(0.5f, glm::vec3(col(rng), col(rng), col(rng)),
+											   glm::vec3(x(rng), y(rng), -10));
 		sphere->setMaterialType(MaterialType::DIFFUSE_AND_GLOSSY);
 		shapes.emplace_back(std::move(sphere));
 	}
 
 	auto camera = std::make_unique<Camera>(90, float(window->getSize().x) / float(window->getSize().y),
-															  glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+										   glm::vec3(0.0f, 1.0f, 0.0f),
+										   glm::vec3(0.0f, 0.0f, 1.0f));
 	camera->setPos(glm::vec3(0.0f, 0.0f, 0.0f));
 
 	auto bvh = std::make_shared<BVH>();
 	bvh->buildSAH(shapes);
 	
 	auto image = new Image(camera.get(), window->getSize().x, window->getSize().y);
+	
+	auto nstart = std::chrono::steady_clock::now();
+	image->render(camera.get(), shapes, lights);
+	auto nend = std::chrono::steady_clock::now();
+	std::chrono::duration<float> TimeNoBVH = nend - nstart;
 
+	auto start = std::chrono::steady_clock::now();
 	image->render(camera.get(), bvh, lights);
+	auto end = std::chrono::steady_clock::now();
+	std::chrono::duration<float> TimeBVH = end - start;
+
+	std::cout << "Time to render with BVH: " << TimeBVH.count() << "Seconds." << std::endl;
+
+	std::cout << "Time to render without BVH: " << TimeNoBVH.count() << "Seconds." << std::endl;
 
     while (window->isOpen())
     {

@@ -6,9 +6,10 @@ class Geometry;
 
 enum Axis
 {
+	NONE = -1,
 	X = 0,
 	Y = 1,
-	Z = 2,
+	Z = 2
 };
 
 class ComparePrimitives

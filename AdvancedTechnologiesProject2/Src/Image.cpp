@@ -1,10 +1,7 @@
 #include "Image.h"
 
-#include <fstream>
 #include <iostream>
 #include <glm/glm.hpp>
-#include <chrono>
-#include <atomic>
 #include <future>
 
 #include "Geometry.h"
@@ -50,8 +47,6 @@ void Image::render(Camera* camera, const std::vector<std::shared_ptr<Geometry>>&
 	size_t max = m_imageData.m_size.x * m_imageData.m_size.y;
 	std::vector<std::future<void>> future_vector;
 
-	auto start = std::chrono::steady_clock::now();
-
 	//Assign pixels to render for each thread
 	for (size_t i = 0; i < cores; ++i)
 	{
@@ -81,13 +76,7 @@ void Image::render(Camera* camera, const std::vector<std::shared_ptr<Geometry>>&
 		thread.wait();
 	}
 
-	auto end = std::chrono::steady_clock::now();
-
-	std::chrono::duration<float> time = end - start;
-
-	std::cout << "Time to render:" << time.count() << std::endl;
-
-	//createImage();
+	createImage();
 }
 
 void Image::render(Camera * camera, std::shared_ptr<BVH>& bvh, const std::vector<std::shared_ptr<Light>>& lights)
@@ -97,8 +86,6 @@ void Image::render(Camera * camera, std::shared_ptr<BVH>& bvh, const std::vector
 	int cores = std::thread::hardware_concurrency();
 	int max = m_imageData.m_size.x * m_imageData.m_size.y;
 	std::vector<std::future<void>> future_vector;
-
-	auto start = std::chrono::steady_clock::now();
 
 	//Assign pixels to render for each thread
 	for (int c = 0; c < cores; ++c)
@@ -128,12 +115,6 @@ void Image::render(Camera * camera, std::shared_ptr<BVH>& bvh, const std::vector
 	{
 		thread.wait();
 	}
-
-	auto end = std::chrono::steady_clock::now();
-
-	std::chrono::duration<float> time = end - start;
-
-	std::cout << "Time to render:" << time.count() << std::endl;
 
 	createImage();
 }

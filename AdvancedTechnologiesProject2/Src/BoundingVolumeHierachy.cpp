@@ -40,7 +40,7 @@ void BVH::buildBVH(std::vector<std::shared_ptr<Geometry>> shapes)
 	std::cout << "Time to build BVH: " << time.count() << std::endl;
 }
 
-void BVH::buildRecursiveBVH(int leftIndex, int rightIndex, std::shared_ptr<BVHNode> node, int depth, Axis& axis)
+void BVH::buildRecursiveBVH(int leftIndex, int rightIndex, std::shared_ptr<BVHNode>& node, int depth, Axis& axis)
 {
 	if ((rightIndex - leftIndex) <= 4)
 	{
@@ -126,13 +126,8 @@ void BVH::buildSAH(std::vector<std::shared_ptr<Geometry>> shapes)
 	m_shapes = shapes;
 	m_rootNode = std::make_shared<BVHNode>();
 
-	glm::vec3 min(0);
-	glm::vec3 max(0);
-
-	Axis axis = Axis::X;
-	ComparePrimitives cmp(static_cast<Axis>(axis));
-	std::sort(m_shapes.begin(), m_shapes.end(), cmp);
-
+	glm::vec3 min(kInfinity);
+	glm::vec3 max(-kInfinity);
 	for (auto& obj : shapes)
 	{
 		min = glm::min(obj->getBox().getMin(), min);
@@ -142,8 +137,7 @@ void BVH::buildSAH(std::vector<std::shared_ptr<Geometry>> shapes)
 	AABB worldBox(min, max);
 	m_rootNode->setBounds(worldBox);
 	m_rootNode->createNode(0, m_shapes.size());
-	buildRecursiveSAH(0, m_shapes.size(), m_rootNode, 0, axis);
-
+	buildRecursiveSAH(0, m_shapes.size(), m_rootNode, 0);
 
 	auto end = std::chrono::steady_clock::now();
 
@@ -152,177 +146,253 @@ void BVH::buildSAH(std::vector<std::shared_ptr<Geometry>> shapes)
 	std::cout << "Time to build SAH: " << time.count() << std::endl;
 }
 
-void BVH::buildRecursiveSAH(int leftIndex, int rightIndex, std::shared_ptr<BVHNode> node, int depth, Axis& axis)
+void BVH::buildRecursiveSAH(int leftIndex, int rightIndex, std::shared_ptr<BVHNode> node, int depth)
 {
 	if ((rightIndex - leftIndex) <= 4)
 	{
-		node->createLeaf(leftIndex, rightIndex);
+		node->createLeaf(leftIndex, rightIndex - leftIndex);
 	}
 	else
 	{
-		float pSA = node->getBounds().getSurfaceArea();
-		float pCI = node->getNumberOfObjects() * pSA * 1.0f;
+		float mincost = (rightIndex - leftIndex) * (node->getBounds().getSurfaceArea());
 
-		float ci;
+		float bestSplit = kInfinity;
 
-		int splitIndex = 0;
+		Axis bestAxis = Axis::NONE;
 
-		auto leftNode = std::make_shared<BVHNode>();
-		AABB leftBounds;
-		auto rightNode = std::make_shared<BVHNode>();
-		AABB rightBounds;
-
-		Axis axis = Axis::X;
-
-		float cost = 0.0f;
-
-		do
+		for (int j = 0; j < 3; j++)
 		{
-			int rNumberOfObj = 0;
-			int lNumberOfObj = 0;
+			Axis axis = static_cast<Axis>(j);
 
-			glm::vec3 lmin;
-			glm::vec3 lmax;
-			glm::vec3 rmin;
-			glm::vec3 rmax;
+			float start, stop, step;
 
-			ComparePrimitives cmp(static_cast<Axis>(axis));
-
-			std::sort(m_shapes.begin() + leftIndex, m_shapes.begin() + splitIndex, cmp);
-			for (int i = leftIndex; i < splitIndex; i++)
+			switch (axis)
 			{
-				lmin = glm::min(m_shapes[i]->getBox().getMin(), lmin);
-				lmax = glm::max(m_shapes[i]->getBox().getMax(), lmax);
-				lNumberOfObj++;
+			case Axis::X:
+				start = node->getBounds().getMin().x;
+				stop = node->getBounds().getMax().x;
+				break;
+			case Axis::Y:
+				start = node->getBounds().getMin().y;
+				stop = node->getBounds().getMax().y;
+				break;
+			case Axis::Z:
+				start = node->getBounds().getMin().z;
+				stop = node->getBounds().getMax().z;
+				break;
 			}
 
-			std::sort(m_shapes.begin() + splitIndex, m_shapes.begin() + rightIndex, cmp);
-			for (int i = splitIndex; i < rightIndex; i++)
+			if (glm::abs(stop - start) < 1e-4)
+				continue;
+
+			step = (stop - start) / (1024.0f / (float)(depth + 1));
+
+
+			glm::vec3 lMin(kInfinity);
+			glm::vec3 lMax(-kInfinity);
+
+			glm::vec3 rMin(kInfinity);
+			glm::vec3 rMax(-kInfinity);
+
+			int lCount = 0;
+			int rCount = 0;
+
+			for (float testSplit = start + step; testSplit < stop - step; testSplit += step)
 			{
-				rmin = glm::min(m_shapes[splitIndex + i]->getBox().getMin(), lmin);
-				rmax = glm::max(m_shapes[splitIndex + i]->getBox().getMax(), lmax);
-				rNumberOfObj++;
+
+
+				for (int i = leftIndex; i < rightIndex; i++)
+				{
+					float value;
+
+					switch (axis)
+					{
+					case Axis::X:
+						value = m_shapes[i]->getPos().x;
+						break;
+					case Axis::Y:
+						value = m_shapes[i]->getPos().y;
+						break;
+					case Axis::Z:
+						value = m_shapes[i]->getPos().z;
+						break;
+					}
+					if (value < testSplit)
+					{
+						lMin = glm::min(lMin, m_shapes[i]->getBox().getMin());
+						lMax = glm::max(lMax, m_shapes[i]->getBox().getMax());
+						lCount++;
+					}
+					else
+					{
+						rMin = glm::min(rMin, m_shapes[i]->getBox().getMin());
+						rMax = glm::max(rMax, m_shapes[i]->getBox().getMax());
+						rCount++;
+					}
+				}
+
+				if (lCount <= 1 || rCount <= 1)
+					continue;
+
+				AABB leftBox(lMin, lMax);
+				AABB rightBox(rMin, rMax);
+
+				float totalCost = leftBox.getSurfaceArea() * lCount + rightBox.getSurfaceArea() * rCount;
+
+				if (totalCost < mincost)
+				{
+					mincost = totalCost;
+					bestSplit = testSplit;
+					bestAxis = axis;
+				}
+			}
+		}
+
+		if (bestAxis == Axis::NONE)
+		{
+			node->createLeaf(leftIndex, rightIndex - leftIndex);
+			return;
+		}
+
+		glm::vec3 lMin(kInfinity);
+		glm::vec3 lMax(-kInfinity);
+
+		glm::vec3 rMin(kInfinity);
+		glm::vec3 rMax(-kInfinity);
+
+		int splitIndex = leftIndex;
+
+		for (int i = leftIndex; i < rightIndex; i++)
+		{
+			float value;
+
+			switch (bestAxis)
+			{
+			case Axis::X:
+				value = m_shapes[i]->getPos().x;
+				break;
+			case Axis::Y:
+				value = m_shapes[i]->getPos().y;
+				break;
+			case Axis::Z:
+				value = m_shapes[i]->getPos().z;
+				break;
 			}
 
-			AABB leftBox(lmin, lmax);
-			AABB rightBox(rmin, rmax);
-
-			cost = calculateCost(1.0f, 2.0f, lNumberOfObj, rNumberOfObj,  
-								 leftBox.getSurfaceArea(), rightBox.getSurfaceArea(), pSA);
-			
-			if (cost > pCI)
+			if (value < bestSplit)
 			{
-				leftBounds = leftBox;
-				rightBounds = rightBox;
+				lMin = glm::min(lMin, m_shapes[i]->getBox().getMin());
+				lMax = glm::max(lMax, m_shapes[i]->getBox().getMax());
+				splitIndex++;
 			}
 			else
 			{
-				splitIndex++;
+				rMin = glm::min(rMin, m_shapes[i]->getBox().getMin());
+				rMax = glm::max(rMax, m_shapes[i]->getBox().getMax());
 			}
-		} while (cost > pCI);
-		
-		switch (axis)
-		{
-		case Axis::X:
-			axis = Axis::Y;
-			break;
-		case Axis::Y:
-			axis = Axis::Z;
-			break;
-		case Axis::Z:
-			axis = Axis::X;
-			break;
 		}
 
-		leftNode->createNode(leftIndex, splitIndex);
-		leftNode->setBounds(leftBounds);
-		rightNode->createNode(splitIndex, rightIndex);
-		rightNode->setBounds(rightBounds);
-		
-		node->setRight(rightNode);
-		node->setLeft(leftNode);
+		node->createNode(leftIndex, rightIndex - leftIndex);
 
-		buildRecursiveSAH(leftIndex, splitIndex, leftNode, depth + 1, axis);
-		buildRecursiveSAH(leftIndex, splitIndex, leftNode, depth + 1, axis);
+		node->setLeft(std::make_shared<BVHNode>());
+		node->getLeft()->setBounds(AABB(lMin, lMax));
+		buildRecursiveSAH(leftIndex, splitIndex, node->getLeft(), depth + 1);
+
+		node->setRight(std::make_shared<BVHNode>());
+		node->getRight()->setBounds(AABB(rMin, rMax));
+		buildRecursiveSAH(splitIndex, rightIndex, node->getRight(), depth + 1);
 	}
 }
 
-const float & BVH::calculateCost(const float & ct, const float & ci, const int & nl, const int & nr, const float & saL, const float & saR, const float & saP)
-{
-	return ct + ((saL / saP) * nl * ci) + ((saR / saP)* nr * ci);
-}
-
-bool BVH::checkIntersection(Ray * ray, std::shared_ptr<Geometry>& hitObj, std::uint64_t & index, glm::vec2 & uv)
+bool BVH::checkIntersection(Ray* ray, Geometry** hitObj, std::uint64_t & index, glm::vec2 & uv)
 {
 	std::stack<StackItem> stackItems;
-	std::shared_ptr<BVHNode> currentNode = m_rootNode;
-	StackItem item;
-	item.ptr = m_rootNode;
-	stackItems.emplace(item);
+	
+	BVHNode* currentNode = m_rootNode.get();
+	float t = kInfinity;
 
 	do
 	{
 		if (currentNode->getBounds().checkRayCollision(ray))
 		{
-			if (currentNode->isLeaf())
+			if (!currentNode->isLeaf())
 			{
 				float t1 = kInfinity;
 				float t2 = kInfinity;
 
-				if (currentNode->getLeft()->getBounds().checkRayCollision(ray, t1)
-					|| currentNode->getRight()->getBounds().checkRayCollision(ray, t2))
-				{
-					if (t1 < t2)
-					{
-						currentNode = currentNode->getLeft();
+				bool leftIntersect = currentNode->getLeft()->getBounds().checkRayCollision(ray, t1);
+				bool rightIntersect = currentNode->getBounds().checkRayCollision(ray, t2);
 
-						if (t2 != kInfinity)
-						{
-							StackItem farthest;
-							farthest.ptr = stackItems.top().ptr->getRight();
-							farthest.t = t1;
-							stackItems.emplace(farthest);
-						}
+				if (leftIntersect && rightIntersect)
+				{
+					if (t1 > t2)
+					{
+						StackItem farthest;
+						farthest.ptr = currentNode->getRight().get();
+						farthest.t = t2;
+						stackItems.push(farthest);
+
+						StackItem nearest;
+						nearest.ptr = currentNode->getLeft().get();
+						nearest.t = t1;
+						stackItems.push(nearest);
+
+
 					}
 					else
 					{
-						currentNode = currentNode->getRight();
+						StackItem farthest;
+						farthest.ptr = currentNode->getLeft().get();
+						farthest.t = t1;
+						stackItems.push(farthest);
 
-						if (t2 != kInfinity)
-						{
-							StackItem farthest;
-							farthest.ptr = stackItems.top().ptr->getLeft();
-							farthest.t = t2;
-							stackItems.emplace(farthest);
-						}
+						StackItem nearest;
+						nearest.ptr = currentNode->getRight().get();
+						nearest.t = t2;
+						stackItems.push(nearest);
 					}
-
 				}
 
+				if (leftIntersect && !rightIntersect)
+				{
+					StackItem node;
+					node.ptr = currentNode->getLeft().get();
+					node.t = t1;
+					stackItems.push(node);
+				}
+
+				if (rightIntersect && !leftIntersect)
+				{
+					StackItem node;
+					node.ptr = currentNode->getRight().get();
+					node.t = t2;
+					stackItems.push(node);
+				}
 			}
 			else
 			{
-				for (int i = currentNode->getIndex();
-					 i < currentNode->getIndex() + currentNode->getNumberOfObjects();
-					 i++)
+				for (int i = currentNode->getIndex(); i < currentNode->getIndex() + currentNode->getNumberOfObjects(); i++)
 				{
-					if (m_shapes[i]->getBox().checkRayCollision(ray))
+					float distance = kInfinity;
+					if (m_shapes[i]->intersect(ray, index, uv, distance))
 					{
-						if (m_shapes[i]->intersect(ray, index, uv))
+						if (distance < t)
 						{
-							hitObj = m_shapes[i];
+							t = distance;
+							*hitObj = m_shapes[i].get();
 						}
 					}
 				}
 			}
 		}
 
-
 		if (!stackItems.empty())
+		{
 			currentNode = stackItems.top().ptr;
-
-		stackItems.pop();
+			stackItems.pop();
+		}
 	} while (!stackItems.empty());
+	
 
 	return (hitObj != nullptr);
 }

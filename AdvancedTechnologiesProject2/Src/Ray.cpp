@@ -23,12 +23,13 @@ const bool Ray::trace(const std::vector<std::shared_ptr<Geometry>> &objects)
 		float tNearK = kInfinity;
 		std::uint64_t indexK;
 		glm::vec2 uvK;
+		float t;
 
 		if (obj->getBox().checkRayCollision(this))
 		{
-			if (obj->intersect(this, indexK, uvK))
+			if (obj->intersect(this, indexK, uvK, t))
 			{
-				m_hitObject = obj;
+				m_hitObject = obj.get();
 				m_index = indexK;
 				m_uv = uvK;
 			}
@@ -40,7 +41,7 @@ const bool Ray::trace(const std::vector<std::shared_ptr<Geometry>> &objects)
 
 const bool Ray::trace(std::shared_ptr<BVH>& bvh)
 {
-	bvh->checkIntersection(this, m_hitObject, m_index, m_uv);
+	bvh->checkIntersection(this, &m_hitObject, m_index, m_uv);
 	return (m_hitObject != nullptr);
 }
 

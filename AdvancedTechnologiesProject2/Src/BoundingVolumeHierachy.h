@@ -13,7 +13,7 @@ class Ray;
 
 struct StackItem
 {
-	std::shared_ptr<BVHNode> ptr;
+	BVHNode* ptr;
 	float t;
 };
 
@@ -24,16 +24,12 @@ public:
 	~BVH() = default;
 
 	void buildBVH(std::vector<std::shared_ptr<Geometry>> shapes);
-	void buildRecursiveBVH(int leftIndex, int rightIndex, std::shared_ptr<BVHNode> node, int depth, Axis& axis);
+	void buildRecursiveBVH(int leftIndex, int rightIndex, std::shared_ptr<BVHNode>& node, int depth, Axis& axis);
 
 	void buildSAH(std::vector<std::shared_ptr<Geometry>> shapes);
-	void buildRecursiveSAH(int leftIndex, int rightIndex, std::shared_ptr<BVHNode> node, int depth, Axis& axis);
+	void buildRecursiveSAH(int leftIndex, int rightIndex, std::shared_ptr<BVHNode> node, int depth);
 
-
-	const float& calculateCost(const float& ct, const float& ci, const int& nl, const int& nr,
-							   const float& saL, const float& saR, const float& saP);
-
-	bool checkIntersection(Ray* ray, std::shared_ptr<Geometry>& hitObj, std::uint64_t& index, glm::vec2& uv);
+	bool checkIntersection(Ray* ray, Geometry** hitObj, std::uint64_t& index, glm::vec2& uv);
 private:
 	std::vector<std::shared_ptr<Geometry>> m_shapes;
 

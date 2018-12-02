@@ -22,7 +22,7 @@ public:
 		  float specular = 25);
 	virtual ~Geometry() = default;
 
-	virtual bool intersect(Ray* ray, std::uint64_t &, glm::vec2 &) = 0;
+	virtual bool intersect(Ray* ray, std::uint64_t &, glm::vec2 &, float&) = 0;
 	virtual void getSurfaceData(const glm::vec3& pHit, glm::vec3& nHit, glm::vec2& tex) const = 0;
 
 	bool solveQuadratic(const float& a, const float& b, float& c, float& x0, float& x1);
