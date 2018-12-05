@@ -65,7 +65,6 @@ glm::vec3 Ray::castRay(const std::vector<std::shared_ptr<Geometry>>& shapes,
 	}
 
 	glm::vec3 hitColour = data.m_backgroundColour;
-	glm::vec2 uv;
 
 	if (this->trace(shapes))
 	{
@@ -73,7 +72,7 @@ glm::vec3 Ray::castRay(const std::vector<std::shared_ptr<Geometry>>& shapes,
 		glm::vec3 n;
 		glm::vec2 st;
 
-		m_hitObject->getSurfaceProperties(hitPoint, m_rayDirection, m_index, uv, n, st);
+		m_hitObject->getSurfaceProperties(hitPoint, m_rayDirection, m_index, m_uv, n, st);
 		glm::vec3 tmp = hitPoint;
 
 		switch (m_hitObject->getMaterialType())
@@ -135,9 +134,10 @@ glm::vec3 Ray::castRay(const std::vector<std::shared_ptr<Geometry>>& shapes,
 				bool inShadow = shadowRay->trace(shapes)
 					&& shadowRay->m_closestHit * shadowRay->m_closestHit < lightDistance2;
 
-				lightAmt += (1 - inShadow) * obj->getIntensity() * lDotN;
+				lightAmt += (1 - inShadow) * obj->getIntensity();
 				glm::vec3 reflectionDir = reflect(-lightDir, n);
-				specularColour += glm::pow(glm::max(0.0f, -glm::dot(reflectionDir, m_rayDirection)), m_hitObject->getSpecularExponent()) * obj->getIntensity();
+				specularColour += glm::pow(glm::max(0.0f, -glm::dot(reflectionDir, m_rayDirection)),
+										   m_hitObject->getSpecularExponent()) * obj->getIntensity();
 			}
 			hitColour = lightAmt * m_hitObject->evalDiffuseColour(st) * m_hitObject->getKD() + specularColour * m_hitObject->getKS();
 			break;
