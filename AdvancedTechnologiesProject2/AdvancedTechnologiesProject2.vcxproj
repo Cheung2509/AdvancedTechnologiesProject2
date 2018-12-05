@@ -414,6 +414,7 @@
     <ClCompile Include="Src\Ray.cpp" />
     <ClCompile Include="Src\Geometry.cpp" />
     <ClCompile Include="Src\Sphere.cpp" />
+    <ClCompile Include="Src\Triangle.cpp" />
     <ClCompile Include="Src\vendor\glm\detail\glm.cpp" />
   </ItemGroup>
   <ItemGroup>

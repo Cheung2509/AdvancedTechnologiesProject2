@@ -806,6 +806,9 @@
     <ClCompile Include="Src\ComparePrimitives.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Src\Triangle.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Src\vendor\glm\detail\func_common.inl">

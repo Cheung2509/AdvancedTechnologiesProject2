@@ -374,12 +374,16 @@ bool BVH::checkIntersection(Ray* ray, Geometry** hitObj, std::uint64_t & index, 
 				for (int i = currentNode->getIndex(); i < currentNode->getIndex() + currentNode->getNumberOfObjects(); i++)
 				{
 					float distance = kInfinity;
-					if (m_shapes[i]->intersect(ray, index, uv, distance))
+					
+					if (m_shapes[i]->getBox().checkRayCollision(ray))
 					{
-						if (distance < t)
+						if (m_shapes[i]->intersect(ray, index, uv, distance))
 						{
-							t = distance;
-							*hitObj = m_shapes[i].get();
+							if (distance < t)
+							{
+								t = distance;
+								*hitObj = m_shapes[i].get();
+							}
 						}
 					}
 				}
