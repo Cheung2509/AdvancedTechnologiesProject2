@@ -6,17 +6,19 @@
 
 #include "BVHNode.h"
 #include "Geometry.h"
+#include "Model.h"
 #include "Ray.h"
 
 void BVH::buildBVH(std::vector<std::shared_ptr<Geometry>> shapes)
 {
 	auto start = std::chrono::steady_clock::now();
+
 	m_shapes = shapes;
 
 	m_rootNode = std::make_shared<BVHNode>();
 
-	glm::vec3 min(0);
-	glm::vec3 max(0);
+	glm::vec3 min(kInfinity);
+	glm::vec3 max(-kInfinity);
 	
 	Axis axis = Axis::X;
 	ComparePrimitives cmp(static_cast<Axis>(axis));
@@ -25,7 +27,7 @@ void BVH::buildBVH(std::vector<std::shared_ptr<Geometry>> shapes)
 	for (auto& obj : shapes)
 	{
 		min = glm::min(obj->getBox().getMin(), min);
-		max =glm::max(obj->getBox().getMax(), max);
+		max = glm::max(obj->getBox().getMax(), max);
 	}
 
 	AABB worldBox(min, max);
@@ -61,8 +63,8 @@ void BVH::buildRecursiveBVH(int leftIndex, int rightIndex, std::shared_ptr<BVHNo
 		}
 
 		auto leftNode = std::make_shared<BVHNode>();
-		glm::vec3 min = m_shapes[leftIndex]->getBox().getMin();
-		glm::vec3 max = m_shapes[leftIndex]->getBox().getMax();;
+		glm::vec3 min(kInfinity);
+		glm::vec3 max(-kInfinity);
 		int numberOfObj = 0;
 
 		switch (axis)

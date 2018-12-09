@@ -40,7 +40,7 @@ int main()
 		shapes.emplace_back(std::move(sphere));
 	}
 */
-	auto triangle = std::make_shared<Triangle>(glm::vec3(-1,-1,-6), glm::vec3(1,-3,-5), glm::vec3(0,1,-5), glm::vec3(0), glm::vec3(1.0f, 0.0f, 0.0f));
+	auto triangle = std::make_shared<Triangle>(glm::vec3(-1,-1,-5), glm::vec3(1,-3,-5), glm::vec3(0,1,-5), glm::vec3(0), glm::vec3(1.0f, 0.0f, 0.0f));
 	triangle->setMaterialType(MaterialType::DIFFUSE_AND_GLOSSY);
 	shapes.emplace_back(std::move(triangle));
 

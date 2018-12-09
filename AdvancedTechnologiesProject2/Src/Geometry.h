@@ -14,11 +14,18 @@ enum MaterialType
 	REFLECTION
 };
 
+enum GeometryType
+{
+	NONE,
+	MESH, 
+	PRIMITIVE
+};
+
 class Geometry : public Object
 {
 public:
 	Geometry() = default;
-	Geometry(const glm::vec3& col, MaterialType type = DIFFUSE_AND_GLOSSY, float ior = 1.3f, float kd = 0.8f, float ks = 0.2, 
+	Geometry(const glm::vec3& col, GeometryType gType, MaterialType type = DIFFUSE_AND_GLOSSY, float ior = 1.3f, float kd = 0.8f, float ks = 0.2, 
 		  float specular = 25);
 	virtual ~Geometry() = default;
 
@@ -29,6 +36,8 @@ public:
 
 	const glm::vec3& getDiffuseColour() const { return m_diffuseColour; }
 	const MaterialType& getMaterialType() const { return m_matType; }
+	const GeometryType& getGeometryType() const { return m_geometryType; }
+
 	const float& getIOR() const { return m_ior; }
 	const float& getKD()  const { return m_kd; }
 	const float& getKS()  const { return m_ks; }
@@ -45,11 +54,11 @@ public:
 
 	virtual void getSurfaceProperties(const glm::vec3&, const glm::vec3&, const uint64_t&, const glm::vec2&, glm::vec3&, glm::vec2&) const = 0;
 	virtual glm::vec3 evalDiffuseColour(const glm::vec2&) const { return m_diffuseColour; }
-
 protected:
 	glm::vec3 m_diffuseColour;
 
 	MaterialType m_matType;
+	GeometryType m_geometryType;
 
 	float m_ior;
 	float m_kd;

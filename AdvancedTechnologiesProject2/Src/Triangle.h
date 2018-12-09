@@ -18,6 +18,4 @@ private:
 	glm::vec3 m_v0;
 	glm::vec3 m_v1;
 	glm::vec3 m_v2;
-
-	glm::vec3 cols[3];
 };

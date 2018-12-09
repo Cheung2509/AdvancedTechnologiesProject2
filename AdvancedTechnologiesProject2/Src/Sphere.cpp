@@ -7,7 +7,7 @@
 #include "Ray.h"
 
 Sphere::Sphere(const float & r, const glm::vec3 & colour, const glm::vec3& pos)
-	:m_radius(r), m_radius2(r*r), Geometry(colour)
+	:m_radius(r), m_radius2(r*r), Geometry(colour, GeometryType::PRIMITIVE)
 {
 	m_pos = pos;
 	m_boundingBox = AABB(glm::vec3(-m_radius) + m_pos, glm::vec3(m_radius) + m_pos);
