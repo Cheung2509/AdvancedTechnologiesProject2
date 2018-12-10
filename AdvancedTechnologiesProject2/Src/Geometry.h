@@ -16,7 +16,6 @@ enum MaterialType
 
 enum GeometryType
 {
-	NONE,
 	MESH, 
 	PRIMITIVE
 };

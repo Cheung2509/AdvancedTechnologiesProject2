@@ -9,6 +9,7 @@
 #include "Camera.h"
 #include "Sphere.h"
 #include "Triangle.h"
+#include "Model.h"
 #include "Light.h"
 #include "BoundingVolumeHierachy.h"
 
@@ -40,14 +41,13 @@ int main()
 		shapes.emplace_back(std::move(sphere));
 	}
 */
-	auto triangle = std::make_shared<Triangle>(glm::vec3(-1,-1,-5), glm::vec3(1,-3,-5), glm::vec3(0,1,-5), glm::vec3(0), glm::vec3(1.0f, 0.0f, 0.0f));
-	triangle->setMaterialType(MaterialType::DIFFUSE_AND_GLOSSY);
-	shapes.emplace_back(std::move(triangle));
+	auto model = std::make_shared<Model>("teapot.obj", glm::vec3(1.0f, 0.0f, 0.0f));
+	shapes.push_back(model);
 
 	auto camera = std::make_unique<Camera>(90, float(window->getSize().x) / float(window->getSize().y),
 										   glm::vec3(0.0f, 1.0f, 0.0f),
 										   glm::vec3(0.0f, 0.0f, 1.0f));
-	camera->setPos(glm::vec3(0.0f, 0.0f, 0.0f));
+	camera->setPos(glm::vec3(0.0f, 0.0f, 5.0f));
 
 	auto bvh = std::make_shared<BVH>();
 	bvh->buildSAH(shapes);

@@ -6,7 +6,7 @@ class  Triangle : public Geometry
 {
 public:
 	Triangle() = default;
-	Triangle(glm::vec3 v0, glm::vec3 v1, glm::vec3 v2, glm::vec3 pos, glm::vec3 col);
+	Triangle(glm::vec3 v0, glm::vec3 v1, glm::vec3 v2, glm::vec3 col);
 	~Triangle() = default;
 
 	bool intersect(Ray* ray, std::uint64_t& index, glm::vec2& uv, float& t);

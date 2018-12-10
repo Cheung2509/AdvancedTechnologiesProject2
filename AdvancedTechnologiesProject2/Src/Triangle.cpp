@@ -6,7 +6,7 @@
 
 constexpr float kEpsilon = 1e-8;
 
-Triangle::Triangle(glm::vec3 v0, glm::vec3 v1, glm::vec3 v2, glm::vec3 pos, glm::vec3 col)
+Triangle::Triangle(glm::vec3 v0, glm::vec3 v1, glm::vec3 v2, glm::vec3 col)
 	: m_v0(v0), m_v1(v1), m_v2(v2), Geometry(col, GeometryType::PRIMITIVE)
 {
 	glm::vec3 min = glm::min(m_v0, m_v1);

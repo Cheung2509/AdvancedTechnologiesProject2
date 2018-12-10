@@ -125,7 +125,23 @@ void BVH::buildSAH(std::vector<std::shared_ptr<Geometry>> shapes)
 {
 	auto start = std::chrono::steady_clock::now();
 
-	m_shapes = shapes;
+	for (auto& obj : shapes)
+	{
+		if (obj->getGeometryType() == GeometryType::PRIMITIVE)
+		{
+			m_shapes.push_back(obj);
+		}
+		else if (obj->getGeometryType() == GeometryType::MESH)
+		{
+			auto temp = std::static_pointer_cast<Model>(obj);
+
+			for (auto& triangle : temp->getTriangles())
+			{
+				m_shapes.push_back(triangle);
+			}
+		}
+	}
+
 	m_rootNode = std::make_shared<BVHNode>();
 
 	glm::vec3 min(kInfinity);
