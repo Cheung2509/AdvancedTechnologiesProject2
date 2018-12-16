@@ -100,9 +100,9 @@ void Model::loadOBJ(const std::string & filePath)
 	glm::vec3 vertex[3];
 	int count = 0;
 	
-	for (unsigned int i = 0; i < vertexIndices.size(); i++)
+	for (unsigned int i = 0; i < vertexIndices.size() - 1; i++)
 	{
-		if (i % 3 == 0 && i != 0)
+		if (count % 3 == 0 && count != 0)
 		{
 			m_triangles.emplace_back(std::make_shared<Triangle>(vertex[0], vertex[1], vertex[2],
 									 m_diffuseColour));
@@ -110,8 +110,8 @@ void Model::loadOBJ(const std::string & filePath)
 		}
 		else
 		{
-			unsigned int index = vertexIndices[i];
-			vertex[count] = temp_v[index - 1];
+			unsigned int index = vertexIndices[i] - 1;
+			vertex[count] = temp_v[index];
 			count++;
 		}
 

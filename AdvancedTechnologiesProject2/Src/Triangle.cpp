@@ -30,10 +30,11 @@ bool Triangle::intersect(Ray * ray, std::uint64_t & index, glm::vec2 & uv, float
 	glm::vec3 pVec = glm::cross(ray->getDirection(), v0v2);
 	float det = glm::dot(v0v1, pVec);
 
-	float invDet = 1 / det;
-
 	if (det < kEpsilon)
 		return false;
+
+	float invDet = 1 / det;
+
 
 	glm::vec3 tvec = ray->getOrigin() - m_v0;
 	uv.x = glm::dot(tvec, pVec) * invDet;
@@ -65,4 +66,7 @@ void Triangle::getSurfaceProperties(const glm::vec3& hitPoint, const glm::vec3& 
 {
 	hitNormal = glm::cross((m_v1 - m_v0), (m_v2 - m_v0));
 	hitNormal = glm::normalize(hitNormal);
+
+	/*hitNormal = (1 - uv.x - uv.y) * glm::normalize(m_v0) +
+		uv.x * glm::normalize(m_v1) + uv.y * glm::normalize(m_v2);*/
 }

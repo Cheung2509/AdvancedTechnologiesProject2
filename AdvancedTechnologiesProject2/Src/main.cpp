@@ -23,7 +23,7 @@ int main()
 
 	auto light = std::make_shared<Light>();
 	light->setIntensity(1);
-	light->setPos(glm::vec3(0.0f, 10.0f, 5.0f));
+	light->setPos(glm::vec3(0.0f, 10.0f, 2.5f));
 	lights.emplace_back(std::move(light));
 
 	/*std::random_device rd;
@@ -44,17 +44,20 @@ int main()
 	auto model = std::make_shared<Model>("teapot.obj", glm::vec3(1.0f, 0.0f, 0.0f));
 	shapes.push_back(model);
 
+	auto triangle = std::make_shared<Triangle>(glm::vec3(-1, -10, -6), glm::vec3(1, -13, -5), glm::vec3(0, -9, -5), glm::vec3(1.0f, 0.0f, 0.0f));
+	triangle->setMaterialType(MaterialType::DIFFUSE_AND_GLOSSY);
+	shapes.emplace_back(std::move(triangle));
+
 	auto camera = std::make_unique<Camera>(90, float(window->getSize().x) / float(window->getSize().y),
 										   glm::vec3(0.0f, 1.0f, 0.0f),
-										   glm::vec3(0.0f, 0.0f, 1.0f));
-	camera->setPos(glm::vec3(0.0f, 0.0f, 5.0f));
+										   glm::vec3(0.0f, 0.0f, 0.0f));
+	camera->setPos(glm::vec3(0.0f, 2.0f, 4.0f));
 
 	auto bvh = std::make_shared<BVH>();
 	bvh->buildSAH(shapes);
 	
 	auto image = new Image(camera.get(), window->getSize().x, window->getSize().y);
 	
-
 	auto start = std::chrono::steady_clock::now();
 	image->render(camera.get(), bvh, lights);
 	auto end = std::chrono::steady_clock::now();
