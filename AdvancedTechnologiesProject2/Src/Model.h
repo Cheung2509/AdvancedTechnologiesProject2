@@ -8,7 +8,7 @@ class Model : public Geometry
 {
 public:
 	Model() = default;
-	Model(const std::string& filePath, const glm::vec3& colour);
+	Model(const std::string& filePath, const glm::vec3& colour, const glm::vec3& pos);
 	~Model() = default;
 
 	void loadOBJ(const std::string& filePath);

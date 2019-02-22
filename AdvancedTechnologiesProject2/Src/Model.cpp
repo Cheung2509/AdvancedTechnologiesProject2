@@ -4,10 +4,12 @@
 
 #include <iostream>
 
-Model::Model(const std::string & filePath, const glm::vec3& colour)
+Model::Model(const std::string & filePath, const glm::vec3& colour, const glm::vec3& pos = glm::vec3(0.0f))
 	: Geometry(colour, GeometryType::MESH)
 {
+	m_pos = pos;
 	loadOBJ(filePath);
+	
 
 	glm::vec3 min(kInfinity);
 	glm::vec3 max(-kInfinity);
@@ -16,7 +18,9 @@ Model::Model(const std::string & filePath, const glm::vec3& colour)
 	{
 		min = glm::min(min, triangle->getBox().getMin());
 		max = glm::max(max, triangle->getBox().getMax());
+		triangle->setMaterialType(MaterialType::DIFFUSE_AND_GLOSSY);
 	}
+
 
 	m_boundingBox = AABB(min, max);
 }
@@ -36,9 +40,9 @@ void Model::loadOBJ(const std::string & filePath)
 	std::vector<unsigned int> uvIndices;
 	std::vector<unsigned int> normalIndices;
 
-	std::vector<glm::vec3> temp_v;
-	std::vector<glm::vec2> temp_uv;
-	std::vector<glm::vec3> temp_n;
+	std::vector<std::shared_ptr<glm::vec3>> temp_v;
+	std::vector<std::shared_ptr<glm::vec2>> temp_uv;
+	std::vector<std::shared_ptr<glm::vec3>> temp_n;
  
 	while (1)
 	{
@@ -50,21 +54,22 @@ void Model::loadOBJ(const std::string & filePath)
 
 		if (strcmp(lineHeader, "v") == 0)
 		{
-			glm::vec3 vertex;
-			fscanf_s(file, "%f %f %f\n", &vertex.x, &vertex.y, &vertex.z);
-			temp_v.push_back(vertex);
+			std::shared_ptr<glm::vec3> vertex = std::make_shared<glm::vec3>();
+			fscanf_s(file, "%f %f %f\n", &vertex->x, &vertex->y, &vertex->z);
+			*vertex += m_pos;
+			temp_v.emplace_back(vertex);
 		}
 		else if (strcmp(lineHeader, "vt") == 0)
 		{
-			glm::vec2 uv;
-			fscanf_s(file, "%f %f\n", &uv.x, &uv.y);
-			temp_uv.push_back(uv);
+			std::shared_ptr<glm::vec2> uv = std::make_shared<glm::vec2>();
+			fscanf_s(file, "%f %f\n", &uv->x, &uv->y);
+			temp_uv.emplace_back(uv);
 		}
 		else if (strcmp(lineHeader, "vn") == 0)
 		{
-			glm::vec3 normal;
-			fscanf_s(file, "%f %f %f\n", &normal.x, &normal.y, &normal.z);
-			temp_n.push_back(normal);
+			std::shared_ptr<glm::vec3> normal = std::make_shared<glm::vec3>();
+			fscanf_s(file, "%f %f %f\n", &normal->x, &normal->y, &normal->z);
+			temp_n.emplace_back(normal);
 		}
 		else if (strcmp(lineHeader, "f") == 0)
 		{
@@ -75,12 +80,12 @@ void Model::loadOBJ(const std::string & filePath)
 			unsigned int uvIndex[3];
 			unsigned int normalIndex[3];
 
-			int matches = fscanf_s(file, "%d %d %d/n",
-								   &vertexIndex[0],
-								   &vertexIndex[1],
-								   &vertexIndex[2]);
+			int matches = fscanf_s(file, "%d//%d %d//%d %d//%d\n", 
+								 &vertexIndex[0], &normalIndex[0],
+								 &vertexIndex[1], &normalIndex[1], 
+								 &vertexIndex[2], &normalIndex[2]);
 
-			if (matches != 3)
+			if (matches != 6)
 			{
 				printf("File can't be read by our simple parser : ( Try exporting with other options\n");
 				return;
@@ -97,24 +102,22 @@ void Model::loadOBJ(const std::string & filePath)
 			normalIndices.push_back(normalIndex[2]);
 		}
 	}
-	glm::vec3 vertex[3];
+	std::shared_ptr<glm::vec3> vertex[3];
+	glm::vec3 normals[3];
 	int count = 0;
 	
-	for (unsigned int i = 0; i < vertexIndices.size() - 1; i++)
+	for (unsigned int i = 0; i < vertexIndices.size(); ++i)
 	{
-		if (count % 3 == 0 && count != 0)
+		if (i % 3 == 0 && count != 0)
 		{
 			m_triangles.emplace_back(std::make_shared<Triangle>(vertex[0], vertex[1], vertex[2],
 									 m_diffuseColour));
 			count = 0;
 		}
-		else
-		{
-			unsigned int index = vertexIndices[i] - 1;
-			vertex[count] = temp_v[index];
-			count++;
-		}
-
+		unsigned int index = vertexIndices[i] - 1;
+		//normals[count] = temp_n[index];
+		vertex[count] = temp_v[index];
+		count++;
 	}
 }
 

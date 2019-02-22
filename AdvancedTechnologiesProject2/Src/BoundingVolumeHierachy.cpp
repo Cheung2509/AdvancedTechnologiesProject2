@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <stack>
 #include <iostream>
+#include <functional>
 
 #include "BVHNode.h"
 #include "Geometry.h"
@@ -129,7 +130,7 @@ void BVH::buildSAH(std::vector<std::shared_ptr<Geometry>> shapes)
 	{
 		if (obj->getGeometryType() == GeometryType::PRIMITIVE)
 		{
-			m_shapes.push_back(obj);
+			m_shapes.emplace_back(obj);
 		}
 		else if (obj->getGeometryType() == GeometryType::MESH)
 		{
@@ -137,7 +138,7 @@ void BVH::buildSAH(std::vector<std::shared_ptr<Geometry>> shapes)
 
 			for (auto& triangle : temp->getTriangles())
 			{
-				m_shapes.push_back(triangle);
+				m_shapes.emplace_back(triangle);
 			}
 		}
 	}
@@ -156,27 +157,35 @@ void BVH::buildSAH(std::vector<std::shared_ptr<Geometry>> shapes)
 	m_rootNode->setBounds(worldBox);
 	m_rootNode->createNode(0, m_shapes.size());
 	buildRecursiveSAH(0, m_shapes.size(), m_rootNode, 0);
-
+	
 	auto end = std::chrono::steady_clock::now();
 
 	std::chrono::duration<float> time = end - start;
 
 	std::cout << "Time to build SAH: " << time.count() << std::endl;
+	std::cout << "Number of nodes in BVH: " << m_numberOfNodes << std::endl;
 }
 
-void BVH::buildRecursiveSAH(int leftIndex, int rightIndex, std::shared_ptr<BVHNode> node, int depth)
+void BVH::buildRecursiveSAH(const int& leftIndex, const int& rightIndex, std::shared_ptr<BVHNode> node, const int& depth)
 {
-	if ((rightIndex - leftIndex) <= 4)
+	if ((rightIndex - leftIndex) <= 4 || depth > 100)
 	{
 		node->createLeaf(leftIndex, rightIndex - leftIndex);
+		m_numberOfNodes++;
 	}
 	else
 	{
-		float mincost = (rightIndex - leftIndex) * (node->getBounds().getSurfaceArea());
+		float bestCost = 1.0f + node->getBounds().getSurfaceArea() * 2.0f * (rightIndex - leftIndex);
 
 		float bestSplit = kInfinity;
 
 		Axis bestAxis = Axis::NONE;
+
+		int left;
+		int right;
+
+		AABB lBox(glm::vec3(kInfinity), glm::vec3(-kInfinity));
+		AABB rBox(glm::vec3(kInfinity), glm::vec3(-kInfinity));
 
 		for (int j = 0; j < 3; j++)
 		{
@@ -205,19 +214,12 @@ void BVH::buildRecursiveSAH(int leftIndex, int rightIndex, std::shared_ptr<BVHNo
 
 			step = (stop - start) / (1024.0f / (float)(depth + 1));
 
-
-			glm::vec3 lMin(kInfinity);
-			glm::vec3 lMax(-kInfinity);
-
-			glm::vec3 rMin(kInfinity);
-			glm::vec3 rMax(-kInfinity);
-
-			int lCount = 0;
-			int rCount = 0;
+			
 
 			for (float testSplit = start + step; testSplit < stop - step; testSplit += step)
 			{
-
+				int lCount = 0;
+				int rCount = 0;
 
 				for (int i = leftIndex; i < rightIndex; i++)
 				{
@@ -235,16 +237,17 @@ void BVH::buildRecursiveSAH(int leftIndex, int rightIndex, std::shared_ptr<BVHNo
 						value = m_shapes[i]->getPos().z;
 						break;
 					}
+
 					if (value < testSplit)
 					{
-						lMin = glm::min(lMin, m_shapes[i]->getBox().getMin());
-						lMax = glm::max(lMax, m_shapes[i]->getBox().getMax());
+						lBox.setMin(glm::min(lBox.getMin(), m_shapes[i]->getBox().getMin()));
+						lBox.setMax(glm::max(lBox.getMax(), m_shapes[i]->getBox().getMax()));
 						lCount++;
 					}
 					else
 					{
-						rMin = glm::min(rMin, m_shapes[i]->getBox().getMin());
-						rMax = glm::max(rMax, m_shapes[i]->getBox().getMax());
+						rBox.setMin(glm::min(rBox.getMin(), m_shapes[i]->getBox().getMin()));
+						rBox.setMax(glm::max(rBox.getMax(), m_shapes[i]->getBox().getMax()));
 						rCount++;
 					}
 				}
@@ -252,16 +255,17 @@ void BVH::buildRecursiveSAH(int leftIndex, int rightIndex, std::shared_ptr<BVHNo
 				if (lCount <= 1 || rCount <= 1)
 					continue;
 
-				AABB leftBox(lMin, lMax);
-				AABB rightBox(rMin, rMax);
+				float totalCost = 1.0f + ((lBox.getSurfaceArea() / rBox.getSurfaceArea()) *lCount * 2) +
+					((rBox.getSurfaceArea() / lBox.getSurfaceArea()) *lCount * 2);
 
-				float totalCost = leftBox.getSurfaceArea() * lCount + rightBox.getSurfaceArea() * rCount;
-
-				if (totalCost < mincost)
+				if (totalCost < bestCost)
 				{
-					mincost = totalCost;
+					bestCost = totalCost;
 					bestSplit = testSplit;
 					bestAxis = axis;
+
+					left = lCount;
+					right = rCount;
 				}
 			}
 		}
@@ -269,56 +273,20 @@ void BVH::buildRecursiveSAH(int leftIndex, int rightIndex, std::shared_ptr<BVHNo
 		if (bestAxis == Axis::NONE)
 		{
 			node->createLeaf(leftIndex, rightIndex - leftIndex);
+			m_numberOfNodes++;
 			return;
 		}
 
-		glm::vec3 lMin(kInfinity);
-		glm::vec3 lMax(-kInfinity);
-
-		glm::vec3 rMin(kInfinity);
-		glm::vec3 rMax(-kInfinity);
-
-		int splitIndex = leftIndex;
-
-		for (int i = leftIndex; i < rightIndex; i++)
-		{
-			float value;
-
-			switch (bestAxis)
-			{
-			case Axis::X:
-				value = m_shapes[i]->getPos().x;
-				break;
-			case Axis::Y:
-				value = m_shapes[i]->getPos().y;
-				break;
-			case Axis::Z:
-				value = m_shapes[i]->getPos().z;
-				break;
-			}
-
-			if (value < bestSplit)
-			{
-				lMin = glm::min(lMin, m_shapes[i]->getBox().getMin());
-				lMax = glm::max(lMax, m_shapes[i]->getBox().getMax());
-				splitIndex++;
-			}
-			else
-			{
-				rMin = glm::min(rMin, m_shapes[i]->getBox().getMin());
-				rMax = glm::max(rMax, m_shapes[i]->getBox().getMax());
-			}
-		}
-
 		node->createNode(leftIndex, rightIndex - leftIndex);
-
+		m_numberOfNodes++;
+		
 		node->setLeft(std::make_shared<BVHNode>());
-		node->getLeft()->setBounds(AABB(lMin, lMax));
-		buildRecursiveSAH(leftIndex, splitIndex, node->getLeft(), depth + 1);
-
+		node->getLeft()->setBounds(lBox);
+		buildRecursiveSAH(leftIndex, left, node->getLeft(), depth + 1);
+		
 		node->setRight(std::make_shared<BVHNode>());
-		node->getRight()->setBounds(AABB(rMin, rMax));
-		buildRecursiveSAH(splitIndex, rightIndex, node->getRight(), depth + 1);
+		node->getRight()->setBounds(rBox);
+		buildRecursiveSAH(leftIndex, rightIndex, node->getRight(), depth + 1);
 	}
 }
 

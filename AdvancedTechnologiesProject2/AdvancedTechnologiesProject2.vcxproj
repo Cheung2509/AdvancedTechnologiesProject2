@@ -162,6 +162,7 @@
     <ClInclude Include="Src\Ray.h" />
     <ClInclude Include="Src\Geometry.h" />
     <ClInclude Include="Src\Sphere.h" />
+    <ClInclude Include="Src\ThreadManager.h" />
     <ClInclude Include="Src\Triangle.h" />
     <ClInclude Include="Src\vendor\glm\common.hpp" />
     <ClInclude Include="Src\vendor\glm\detail\compute_common.hpp" />
@@ -416,6 +417,7 @@
     <ClCompile Include="Src\Ray.cpp" />
     <ClCompile Include="Src\Geometry.cpp" />
     <ClCompile Include="Src\Sphere.cpp" />
+    <ClCompile Include="Src\ThreadManager.cpp" />
     <ClCompile Include="Src\Triangle.cpp" />
     <ClCompile Include="Src\vendor\glm\detail\glm.cpp" />
   </ItemGroup>
