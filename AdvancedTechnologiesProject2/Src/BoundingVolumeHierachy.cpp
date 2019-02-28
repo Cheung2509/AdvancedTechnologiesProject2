@@ -14,7 +14,22 @@ void BVH::buildBVH(std::vector<std::shared_ptr<Geometry>> shapes)
 {
 	auto start = std::chrono::steady_clock::now();
 
-	m_shapes = shapes;
+	for (auto& obj : shapes)
+	{
+		if (obj->getGeometryType() == GeometryType::PRIMITIVE)
+		{
+			m_shapes.emplace_back(obj);
+		}
+		else if (obj->getGeometryType() == GeometryType::MESH)
+		{
+			auto temp = std::static_pointer_cast<Model>(obj);
+
+			for (auto& triangle : temp->getTriangles())
+			{
+				m_shapes.emplace_back(triangle);
+			}
+		}
+	}
 
 	m_rootNode = std::make_shared<BVHNode>();
 
@@ -41,24 +56,45 @@ void BVH::buildBVH(std::vector<std::shared_ptr<Geometry>> shapes)
 	std::chrono::duration<float> time = end - start;
 
 	std::cout << "Time to build BVH: " << time.count() << std::endl;
+	std::cout << "Number of nodes in BVH: " << m_numberOfNodes << std::endl;
 }
 
-void BVH::buildRecursiveBVH(int leftIndex, int rightIndex, std::shared_ptr<BVHNode>& node, int depth, Axis& axis)
+void BVH::buildRecursiveBVH(int leftIndex, int rightIndex, std::shared_ptr<BVHNode> node, int depth, Axis& axis)
 {
-	if ((rightIndex - leftIndex) <= 4)
+	if ((rightIndex - leftIndex) <= 4 || depth > 50)
 	{
 		node->createLeaf(leftIndex, rightIndex);
+		m_numberOfNodes++;
 	}
 	else
 	{
-		float indexPos = (node->getBounds().getMin().x + node->getBounds().getMax().x) / 2;
+		glm::vec3 indexPos = (node->getBounds().getMin() + node->getBounds().getMax()) / 2.0f;
 		int splitIndex = 0;
 
 		for (int i = leftIndex; i < rightIndex; i++)
 		{
-			if (m_shapes[i]->getPos().x > indexPos)
+			switch (axis)
 			{
-				splitIndex = i;
+			case Axis::X:
+				if (m_shapes[i]->getPos().x > indexPos.x)
+				{
+					splitIndex = i;
+					break;
+				}
+				break;
+			case Axis::Y:
+				if (m_shapes[i]->getPos().y > indexPos.y)
+				{
+					splitIndex = i;
+					break;
+				}
+				break;
+			case Axis::Z:
+				if (m_shapes[i]->getPos().z > indexPos.z)
+				{
+					splitIndex = i;
+					break;
+				}
 				break;
 			}
 		}
@@ -67,19 +103,6 @@ void BVH::buildRecursiveBVH(int leftIndex, int rightIndex, std::shared_ptr<BVHNo
 		glm::vec3 min(kInfinity);
 		glm::vec3 max(-kInfinity);
 		int numberOfObj = 0;
-
-		switch (axis)
-		{
-		case Axis::X:
-			axis = Axis::Y;
-			break;
-		case Axis::Y:
-			axis = Axis::Z;
-			break;
-		case Axis::Z:
-			axis = Axis::X;
-			break;
-		}
 
 		ComparePrimitives cmp(axis);
 		std::sort(m_shapes.begin() + leftIndex, m_shapes.begin() + splitIndex, cmp);
@@ -91,34 +114,31 @@ void BVH::buildRecursiveBVH(int leftIndex, int rightIndex, std::shared_ptr<BVHNo
 			numberOfObj++;
 		}
 		leftNode->setBounds(AABB(min, max));
-		leftNode->createNode(leftIndex, numberOfObj);
 
 
 		//Calculate Right node 
 		auto rightNode = std::make_shared<BVHNode>();
-		min = m_shapes[splitIndex]->getBox().getMin();
-		max = m_shapes[splitIndex]->getBox().getMax();;
-
-
+		glm::vec3 min2(kInfinity);
+		glm::vec3 max2(-kInfinity);
+		
 		std::sort(m_shapes.begin() + splitIndex, m_shapes.begin() + rightIndex, cmp);
 		for (int i = splitIndex; i < rightIndex; i++)
 		{
-			min = glm::min(m_shapes[i]->getBox().getMin(), min);
-			max = glm::max(m_shapes[i]->getBox().getMax(), max);
+			min2 = glm::min(m_shapes[i]->getBox().getMin(), min);
+			max2 = glm::max(m_shapes[i]->getBox().getMax(), max);
 
 			numberOfObj++;
 		}
 
-		rightNode->setBounds(AABB(min, max));
-		rightNode->createNode(splitIndex, rightIndex);
+		rightNode->setBounds(AABB(min2, max2));
 
 		node->setLeft(leftNode);
 		node->setRight(rightNode);
 
-
-
-		buildRecursiveBVH(leftIndex, splitIndex, leftNode, depth + 1, axis);
-		buildRecursiveBVH(splitIndex, rightIndex, rightNode, depth + 1, axis);
+		node->createNode(leftIndex, rightIndex - leftIndex);
+		buildRecursiveBVH(leftIndex, splitIndex, node->getLeft(), depth + 1, axis);
+		buildRecursiveBVH(splitIndex, rightIndex, node->getRight(), depth + 1, axis);
+		m_numberOfNodes++;
 	}
 }
 
@@ -163,7 +183,7 @@ void BVH::buildSAH(std::vector<std::shared_ptr<Geometry>> shapes)
 	std::chrono::duration<float> time = end - start;
 
 	std::cout << "Time to build SAH: " << time.count() << std::endl;
-	std::cout << "Number of nodes in BVH: " << m_numberOfNodes << std::endl;
+	std::cout << "Number of nodes in SAH: " << m_numberOfNodes << std::endl;
 }
 
 void BVH::buildRecursiveSAH(const int& leftIndex, const int& rightIndex, std::shared_ptr<BVHNode> node, const int& depth)

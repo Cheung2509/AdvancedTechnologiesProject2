@@ -24,7 +24,7 @@ public:
 	~BVH() = default;
 
 	void buildBVH(std::vector<std::shared_ptr<Geometry>> shapes);
-	void buildRecursiveBVH(int leftIndex, int rightIndex, std::shared_ptr<BVHNode>& node, int depth, Axis& axis);
+	void buildRecursiveBVH(int leftIndex, int rightIndex, std::shared_ptr<BVHNode> node, int depth, Axis& axis);
 
 	void buildSAH(std::vector<std::shared_ptr<Geometry>> shapes);
 	void buildRecursiveSAH(const int& leftIndex, const int& rightIndex, std::shared_ptr<BVHNode> node, const int& depth);
