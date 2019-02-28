@@ -45,12 +45,24 @@ int main()
 	auto model = std::make_shared<Model>("monkey.obj", glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f));
 	shapes.emplace_back(model);
 
+	auto model2 = std::make_shared<Model>("monkey.obj", glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 2.5f, 0.0f));
+	shapes.emplace_back(model2);
+
+	auto model3 = std::make_shared<Model>("monkey.obj", glm::vec3(1.0f, 0.0f, 1.0f), glm::vec3(0.0, -2.5f, 0.0f));
+	shapes.emplace_back(model3);
+
+	auto model4 = std::make_shared<Model>("monkey.obj", glm::vec3(1.0f, 1.0f, 0.0f), glm::vec3(2.5f, 0.0f, 0.0f));
+	shapes.emplace_back(model4);
+
+	auto model5 = std::make_shared<Model>("monkey.obj", glm::vec3(1.0f, 0.0f, 1.0f), glm::vec3(-2.5f, 0.0f, 0.0f));
+	shapes.emplace_back(model5);
+
 	/*auto triangle = std::make_shared<Triangle>(glm::vec3(-1, -1, 1), glm::vec3(1, -1, 1), glm::vec3(0, 1, 1), glm::vec3(1.0f, 0.0f, 0.0f));
 	triangle->setMaterialType(MaterialType::DIFFUSE_AND_GLOSSY);
 	shapes.emplace_back(std::move(triangle));*/
 
 	auto camera = std::make_unique<Camera>(90, float(window->getSize().x) / float(window->getSize().y),
-										   glm::vec3(0.0f, 1.0f, 0.0f),
+										   glm::vec3(0.0f, -1.0f, 0.0f),
 										   glm::vec3(0.0f, 0.0f, 0.0f));
 	camera->setPos(glm::vec3(0.0f, 0.0f, 4.0f));
 

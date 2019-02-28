@@ -5,7 +5,10 @@ Camera::Camera(const float & fieldOfView, const float & aspectRatio,
 	: m_fov(fieldOfView), m_aspectRatio(aspectRatio), m_up(up), m_target(target), m_nearPlaneDistance(nearPlane),
 	m_farPlaneDistance(farPlane)
 {
-	m_pos = glm::vec3(0.0f, 0.0f, 0.0f);
+	m_pos = glm::vec3(0.0f, 0.0f, 4.0f);
 	
 	m_rotation = glm::lookAt(m_pos, m_target, m_up);
+
+	m_projectionMatrix = glm::perspective(fieldOfView * glm::pi<float>() / 180.0f, m_aspectRatio,
+										  m_nearPlaneDistance, m_farPlaneDistance) * glm::lookAt(m_pos, m_target, m_up);
 }

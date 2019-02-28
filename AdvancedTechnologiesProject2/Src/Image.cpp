@@ -87,11 +87,14 @@ void Image::render(Camera * camera, std::shared_ptr<BVH>& bvh, const std::vector
 	int max = m_imageData.m_size.x * m_imageData.m_size.y;
 	std::vector<std::future<void>> future_vector;
 
+	
+	glm::mat4 model(1.0f);
 	//Assign pixels to render for each thread
 	for (int c = 0; c < cores; ++c)
 	{
 		future_vector.emplace_back(std::async([=]()
 		{
+			
 			for (int index = c; index < max; index += cores)
 			{
 				if (index >= max)
@@ -100,9 +103,10 @@ void Image::render(Camera * camera, std::shared_ptr<BVH>& bvh, const std::vector
 				int xScreenPos = index % m_imageData.m_size.x;
 				int yScreenPos = index / m_imageData.m_size.x;
 
-				float x = (2 * (xScreenPos + 0.5) / (float)m_imageData.m_size.x - 1) * m_imageData.m_aspectRatio * scale;
-				float y = (1 - 2 * (yScreenPos + 0.5) / (float)m_imageData.m_size.y) * scale;
-				Ray ray(camera->getPos(), glm::normalize(glm::vec3(x, y, -1)), 0);
+				glm::vec3 p = glm::unProject(glm::vec3(xScreenPos, yScreenPos, 0), model,
+											 camera->getProjection(),
+											 glm::vec4(0, 0, m_imageData.m_size.x, m_imageData.m_size.y));
+				Ray ray(camera->getPos(), glm::normalize(p - camera->getPos()), 0);
 
 				//Assign colour to pixel
 				putPixel(glm::u64vec2(xScreenPos, yScreenPos), glm::vec4(ray.castRay(bvh, lights, m_imageData), 1.0f));
