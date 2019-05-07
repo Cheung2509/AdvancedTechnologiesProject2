@@ -83,41 +83,62 @@ void Image::render(Camera * camera, std::shared_ptr<BVH>& bvh, const std::vector
 {
 	float scale = glm::tan(glm::radians(m_imageData.m_fov * 0.5f));
 
+	bool threading = false;
 	int cores = std::thread::hardware_concurrency();
 	int max = m_imageData.m_size.x * m_imageData.m_size.y;
 	std::vector<std::future<void>> future_vector;
 
 	
 	glm::mat4 model(1.0f);
-	//Assign pixels to render for each thread
-	for (int c = 0; c < cores; ++c)
-	{
-		future_vector.emplace_back(std::async([=]()
-		{
-			
-			for (int index = c; index < max; index += cores)
-			{
-				if (index >= max)
-					break;
-			
-				int xScreenPos = index % m_imageData.m_size.x;
-				int yScreenPos = index / m_imageData.m_size.x;
 
-				glm::vec3 p = glm::unProject(glm::vec3(xScreenPos, yScreenPos, 0), model,
+	if(threading)
+	{
+		//Assign pixels to render for each thread
+		for(int c = 0; c < cores; ++c)
+		{
+			future_vector.emplace_back(std::async([=]()
+			{
+				int part = m_imageData.m_size.y / cores;
+				for(int i = 0; i < part; i++)
+				{
+					int y = part * c + i;
+
+					for(int x = 0; x < m_imageData.m_size.x; x++)
+					{
+						//Un project to get direction of ray
+						glm::vec3 p = glm::unProject(glm::vec3(x, y, 0), model,
+													 camera->getProjection(),
+													 glm::vec4(0, 0, m_imageData.m_size.x, m_imageData.m_size.y));
+						Ray ray(camera->getPos(), glm::normalize(p - camera->getPos()), 0);
+
+						//Assign colour to pixel
+						putPixel(glm::u64vec2(x, y), glm::vec4(ray.castRay(bvh, lights, m_imageData), 1.0f));
+					}
+				}
+			}));
+		}
+
+		//Wait for all threads to be done
+		for(auto& thread : future_vector)
+		{
+			thread.wait();
+		}
+	}
+	else
+	{
+		for(unsigned int x = 0; x < m_imageData.m_size.x; x++)
+		{
+			for(unsigned int y = 0; y < m_imageData.m_size.y; y++)
+			{
+				glm::vec3 p = glm::unProject(glm::vec3(x, y, 0), model,
 											 camera->getProjection(),
 											 glm::vec4(0, 0, m_imageData.m_size.x, m_imageData.m_size.y));
 				Ray ray(camera->getPos(), glm::normalize(p - camera->getPos()), 0);
 
 				//Assign colour to pixel
-				putPixel(glm::u64vec2(xScreenPos, yScreenPos), glm::vec4(ray.castRay(bvh, lights, m_imageData), 1.0f));
+				putPixel(glm::u64vec2(x, y), glm::vec4(ray.castRay(bvh, lights, m_imageData), 1.0f));
 			}
-		}));
-	}
-
-	//Wait for all threads to be done
-	for (auto& thread : future_vector)
-	{
-		thread.wait();
+		}
 	}
 
 	createImage();

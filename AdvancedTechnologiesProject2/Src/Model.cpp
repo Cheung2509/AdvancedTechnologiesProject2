@@ -18,11 +18,19 @@ Model::Model(const std::string & filePath, const glm::vec3& colour, const glm::v
 	{
 		min = glm::min(min, triangle->getBox().getMin());
 		max = glm::max(max, triangle->getBox().getMax());
-		triangle->setMaterialType(MaterialType::DIFFUSE_AND_GLOSSY);
+		triangle->setMaterialType(m_matType);
 	}
 
 
 	m_boundingBox = AABB(min, max);
+}
+
+void Model::setMaterialType(MaterialType type)
+{
+	for(auto& triangle : m_triangles)
+	{
+		triangle->setMaterialType(type);
+	}
 }
 
 void Model::loadOBJ(const std::string & filePath)
@@ -80,12 +88,12 @@ void Model::loadOBJ(const std::string & filePath)
 			unsigned int uvIndex[3];
 			unsigned int normalIndex[3];
 
-			int matches = fscanf_s(file, "%d//%d %d//%d %d//%d\n", 
-								 &vertexIndex[0], &normalIndex[0],
-								 &vertexIndex[1], &normalIndex[1], 
-								 &vertexIndex[2], &normalIndex[2]);
+			int matches = fscanf_s(file, "%d/%d/%d %d/%d/%d %d/%d/%d\n", 
+								 &vertexIndex[0], &uvIndex[0], &normalIndex[0],
+								 &vertexIndex[1], &uvIndex[1], &normalIndex[1], 
+								 &vertexIndex[2], &uvIndex[2], &normalIndex[2]);
 
-			if (matches != 6)
+			if (matches != 9)
 			{
 				printf("File can't be read by our simple parser : ( Try exporting with other options\n");
 				return;
@@ -103,7 +111,8 @@ void Model::loadOBJ(const std::string & filePath)
 		}
 	}
 	std::shared_ptr<glm::vec3> vertex[3];
-	glm::vec3 normals[3];
+	std::shared_ptr<glm::vec3> normals[3];
+	std::shared_ptr<glm::vec2> uvs[3];
 	int count = 0;
 	
 	for (unsigned int i = 0; i < vertexIndices.size(); ++i)
@@ -111,12 +120,18 @@ void Model::loadOBJ(const std::string & filePath)
 		if (i % 3 == 0 && count != 0)
 		{
 			m_triangles.emplace_back(std::make_shared<Triangle>(vertex[0], vertex[1], vertex[2],
+									 normals[0], normals[1], normals[2],
+									 uvs[0],uvs[1], uvs[2],
 									 m_diffuseColour));
 			count = 0;
 		}
 		unsigned int index = vertexIndices[i] - 1;
-		//normals[count] = temp_n[index];
+		unsigned int nIndex = normalIndices[i] - 1;
+		unsigned int uvIndex = uvIndices[i] - 1;
+
+		normals[count] = temp_n[index];
 		vertex[count] = temp_v[index];
+		uvs[count] = temp_uv[index];
 		count++;
 	}
 }
@@ -131,10 +146,7 @@ bool Model::intersect(Ray * ray, std::uint64_t & index, glm::vec2 & uv, float & 
 		{
 			if (triangle->intersect(ray, index, uv, t))
 			{
-				if (t < ray->getClosestHit())
-				{
-					ray->setHit(t);
-				}
+				intersected = true;
 			}
 		}
 	}

@@ -4,6 +4,7 @@
 #include "Geometry.h"
 
 #include <memory>
+#include <future >
 #include <vector>
 
 class BVHNode

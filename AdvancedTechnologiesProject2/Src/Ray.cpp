@@ -45,11 +45,6 @@ const bool Ray::trace(std::shared_ptr<BVH>& bvh)
 	return (m_hitObject != nullptr);
 }
 
-const float Ray::mix(const float & a, const float & b, const float & mix)
-{
-	return b * mix + a * (1 - mix);
-}
-
 const glm::vec3 Ray::mix(const glm::vec3 & a, const glm::vec3 & b, const float & mixValue)
 {
 	return a * (1 - mixValue) + b * mixValue;
@@ -72,7 +67,7 @@ glm::vec3 Ray::castRay(const std::vector<std::shared_ptr<Geometry>>& shapes,
 		glm::vec3 n;
 		glm::vec2 st;
 
-		m_hitObject->getSurfaceProperties(hitPoint, m_rayDirection, m_index, m_uv, n, st);
+		m_hitObject->getSurface(hitPoint, m_rayDirection, m_index, m_uv, n, st);
 		glm::vec3 tmp = hitPoint;
 
 		switch (m_hitObject->getMaterialType())
@@ -111,6 +106,22 @@ glm::vec3 Ray::castRay(const std::vector<std::shared_ptr<Geometry>>& shapes,
 			auto reflectionRay = std::make_unique<Ray>(reflectionRayOrig, reflctionDir, m_depth + 1);
 			hitColour = reflectionRay->castRay(shapes, lights, data, 1) * kr;
 
+			break;
+		}
+		case MaterialType::PHONG:
+		{
+			glm::vec3 diffuse = glm::vec3(0);
+			glm::vec3 specular = glm::vec3(0);
+
+			for(auto& light : lights)
+			{
+				glm::vec3 lightDir;
+				glm::vec3 lightIntensity;
+				light->illuminate(hitPoint, lightDir, lightIntensity, this->m_closestHit);
+
+				Ray visRay = Ray(hitPoint + n * data.m_bias, -lightDir, m_depth + 1);
+				bool vis = !visRay.trace(shapes);
+			}
 			break;
 		}
 		default:
@@ -155,85 +166,136 @@ glm::vec3 Ray::castRay(std::shared_ptr<BVH> bvh, const std::vector<std::shared_p
 		return data.m_backgroundColour;
 	}
 
-	glm::vec3 hitColour = data.m_backgroundColour;
+	glm::vec3 hitColour(0.0f);
 	glm::vec2 uv;
 
 	if (this->trace(bvh))
 	{
 		glm::vec3 hitPoint = m_rayOrig + m_rayDirection * m_closestHit;
-		glm::vec3 n;
+		glm::vec3 normal;
 		glm::vec2 st;
 
-		m_hitObject->getSurfaceProperties(hitPoint, m_rayDirection, m_index, uv, n, st);
-		glm::vec3 tmp = hitPoint;
+		m_hitObject->getSurface(hitPoint, m_rayDirection, m_index, uv, normal, st);
 
-		switch (m_hitObject->getMaterialType())
+		switch(m_hitObject->getMaterialType())
 		{
-		case MaterialType::REFLECTION_AND_REFRACTION:
-		{
-			glm::vec3 reflctionDir = glm::normalize(reflect(m_rayDirection, n));
-			glm::vec3 refractionDir = glm::normalize(refract(m_rayDirection, n, m_hitObject->getIOR()));
-			glm::vec3 reflectionRayOrig = (glm::dot(reflctionDir, n) < 0) ?
-				hitPoint - n * data.m_bias :
-				hitPoint + n * data.m_bias;
-			glm::vec3 refractionRayOrig = (glm::dot(refractionDir, n) < 0) ?
-				hitPoint - n * data.m_bias :
-				hitPoint + n * data.m_bias;
-
-			auto reflectionRay = std::make_unique<Ray>(reflectionRayOrig, reflctionDir, m_depth + 1);
-			auto refractionRay = std::make_unique<Ray>(refractionRayOrig, refractionDir, m_depth + 1);
-
-			glm::vec3 reflectionColour = reflectionRay->castRay(bvh, lights, data, 1);
-			glm::vec3 refractionColour = refractionRay->castRay(bvh, lights, data, 1);
-
-			float kr;
-			fresnel(m_rayDirection, n, m_hitObject->getIOR(), kr);
-			hitColour = reflectionColour * kr + refractionColour * (1 - kr);
-			break;
-		}
-		case MaterialType::REFLECTION:
-		{
-			float kr;
-			fresnel(m_rayDirection, n, m_hitObject->getIOR(), kr);
-			glm::vec3 reflctionDir = glm::normalize(this->reflect(m_rayDirection, n));
-			glm::vec3 reflectionRayOrig = (glm::dot(reflctionDir, n) < 0) ?
-				hitPoint - n * data.m_bias :
-				hitPoint + n * data.m_bias;
-
-			auto reflectionRay = std::make_unique<Ray>(reflectionRayOrig, reflctionDir, m_depth + 1);
-			hitColour = reflectionRay->castRay(bvh, lights, data, 1) * kr;
-
-			break;
-		}
-		default:
-		{
-			glm::vec3 lightAmt = glm::vec3(0);
-			glm::vec3 specularColour = glm::vec3(0);
-
-
-			auto shadowRay = std::make_unique<Ray>((glm::dot(m_rayDirection, n) < 0) ?
-												   hitPoint - n * data.m_bias :
-												   hitPoint + n * data.m_bias, glm::vec3(0), m_depth + 1);
-
-			for (auto& obj : lights)
+			case MaterialType::REFLECTION_AND_REFRACTION:
 			{
-				glm::vec3 lightDir = glm::normalize(obj->getPos() - hitPoint);
+				glm::vec3 reflctionDir = glm::normalize(reflect(m_rayDirection, normal));
+				glm::vec3 refractionDir = glm::normalize(refract(m_rayDirection, normal, m_hitObject->getIOR()));
+				glm::vec3 reflectionRayOrig = (glm::dot(reflctionDir, normal) < 0) ?
+					hitPoint - normal * data.m_bias :
+					hitPoint + normal * data.m_bias;
+				glm::vec3 refractionRayOrig = (glm::dot(refractionDir, normal) < 0) ?
+					hitPoint - normal * data.m_bias :
+					hitPoint + normal * data.m_bias;
 
-				float lightDistance2 = glm::dot(lightDir, lightDir);
-				shadowRay->m_rayDirection = lightDir;
-				float lDotN = glm::max(0.0f, glm::dot(lightDir, n));
+				auto reflectionRay = std::make_unique<Ray>(reflectionRayOrig, reflctionDir, m_depth + 1);
+				auto refractionRay = std::make_unique<Ray>(refractionRayOrig, refractionDir, m_depth + 1);
 
-				bool inShadow = shadowRay->trace(bvh)
-					&& shadowRay->m_closestHit * shadowRay->m_closestHit < lightDistance2;
+				glm::vec3 reflectionColour = reflectionRay->castRay(bvh, lights, data, 1);
+				glm::vec3 refractionColour = refractionRay->castRay(bvh, lights, data, 1);
 
-				lightAmt += (1 - inShadow) * obj->getIntensity() * lDotN;
-				glm::vec3 reflectionDir = reflect(-lightDir, n);
-				specularColour += glm::pow(glm::max(0.0f, -glm::dot(reflectionDir, m_rayDirection)), m_hitObject->getSpecularExponent()) * obj->getIntensity();
+				float r;
+				fresnel(m_rayDirection, normal, m_hitObject->getIOR(), r);
+				hitColour = reflectionColour * r + refractionColour * (1 - r);
+				break;
 			}
-			hitColour = lightAmt * m_hitObject->evalDiffuseColour(st) * m_hitObject->getKD() + specularColour * m_hitObject->getKS();
-			break;
+			case MaterialType::REFLECTION:
+			{
+				float r;
+				fresnel(m_rayDirection, normal, m_hitObject->getIOR(), r);
+				glm::vec3 reflctionDir = glm::normalize(this->reflect(m_rayDirection, normal));
+				glm::vec3 reflectionRayOrig = (glm::dot(reflctionDir, normal) < 0) ?
+					hitPoint - normal * data.m_bias :
+					hitPoint + normal * data.m_bias;
+
+				auto reflectionRay = std::make_unique<Ray>(reflectionRayOrig, reflctionDir, m_depth + 1);
+				hitColour = reflectionRay->castRay(bvh, lights, data, 1) * r;
+
+				break;
+			}
+			case MaterialType::PHONG:
+			{
+				glm::vec3 diffuse = glm::vec3(0);
+				glm::vec3 specular = glm::vec3(0);
+
+				for(auto& light : lights)
+				{
+					glm::vec3 lightDir;
+					glm::vec3 lightIntensity;
+					light->illuminate(hitPoint, lightDir, lightIntensity, this->m_closestHit);
+
+					Ray visRay = Ray(hitPoint + normal * data.m_bias, -lightDir, m_depth + 1);
+					bool vis = !visRay.trace(bvh);
+
+					float dot = glm::dot(-lightDir, normal);
+					diffuse += m_hitObject->getAlbedo() * light->getIntensity() * glm::max(0.0f, glm::dot(normal, -lightDir));
+
+					glm::vec3 r = reflect(lightDir, normal);
+					specular += float(vis) * lightIntensity * glm::pow(glm::max(0.0f, glm::dot(r, m_rayDirection)), m_hitObject->getSpecularExponent());
+				}
+				hitColour = diffuse * m_hitObject->getKD() * m_hitObject->getDiffuseColour() + specular * m_hitObject->getKS();
+				break;
+			}
+			case MaterialType::DIFFUSE:
+			{
+				//Calculate light
+				for(auto& light : lights)
+				{
+					glm::vec3 lightDir;
+					glm::vec3 lightIntensity;
+					light->illuminate(hitPoint, lightDir, lightIntensity, this->m_closestHit);
+
+					Ray visRay(hitPoint + normal * data.m_bias, -lightDir, m_depth + 1);
+					bool vis = !visRay.trace(bvh);
+
+					float angle = glm::radians(45.0f);
+					float s = m_uv.x * glm::cos(angle) - m_uv.y * glm::sin(angle);
+					float t = m_uv.y * glm::cos(angle) + m_uv.x * glm::sin(angle);
+
+					float pattern = (glm::floor(s * 20.0f) < 0.5f);
+					hitColour += float(vis) * m_hitObject->evalDiffuseColour(st) * light->getIntensity() * glm::max(0.0f, glm::dot(normal, -lightDir));
+				}
+				break;
+			}
+			default:
+			{
+				glm::vec3 lightAmt = glm::vec3(0);
+				glm::vec3 specularColour = glm::vec3(0);
+
+
+				auto shadowRay = std::make_unique<Ray>((glm::dot(m_rayDirection, normal) < 0) ?
+													   hitPoint - normal * data.m_bias :
+													   hitPoint + normal * data.m_bias, glm::vec3(0), m_depth + 1);
+
+				//Calculate light
+				for(auto& obj : lights)
+				{
+					glm::vec3 lightDir(0.0f);
+					glm::vec3 intensity(0.0f);
+					float distance;
+					obj->illuminate(hitPoint, lightDir, intensity, distance);
+
+					float lightDistance2 = glm::dot(lightDir, lightDir);
+					shadowRay->m_rayDirection = lightDir;
+					float lDotN = glm::max(0.0f, glm::dot(lightDir, normal));
+
+					bool inShadow = shadowRay->trace(bvh)
+						&& shadowRay->m_closestHit * shadowRay->m_closestHit < lightDistance2;
+
+					lightAmt += (1 - inShadow) * obj->getIntensity() * lDotN;
+					glm::vec3 reflectionDir = reflect(-lightDir, normal);
+					specularColour += glm::pow(glm::max(0.0f, -glm::dot(reflectionDir, m_rayDirection)), m_hitObject->getSpecularExponent()) * obj->getIntensity();
+				}
+				hitColour = lightAmt * m_hitObject->evalDiffuseColour(st) * m_hitObject->getKD() + specularColour * m_hitObject->getKS();
+				break;
+			}
 		}
-		}
+	}
+	else
+	{
+		hitColour = data.m_backgroundColour;
 	}
 
 	return hitColour;

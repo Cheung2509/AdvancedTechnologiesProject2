@@ -36,9 +36,6 @@
     <ClInclude Include="Src\BVHNode.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Src\ThreadManager.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Src\vendor\glm\detail\_features.hpp">
       <Filter>Vendor\GLM</Filter>
     </ClInclude>
@@ -190,9 +187,6 @@
       <Filter>Vendor\GLM</Filter>
     </ClInclude>
     <ClInclude Include="Src\vendor\glm\gtx\io.hpp">
-      <Filter>Vendor\GLM</Filter>
-    </ClInclude>
-    <ClInclude Include="Src\Light.h">
       <Filter>Vendor\GLM</Filter>
     </ClInclude>
     <ClInclude Include="Src\vendor\glm\gtx\log_base.hpp">
@@ -403,9 +397,6 @@
       <Filter>Vendor\GLM</Filter>
     </ClInclude>
     <ClInclude Include="Src\vendor\glm\gtx\number_precision.hpp">
-      <Filter>Vendor\GLM</Filter>
-    </ClInclude>
-    <ClInclude Include="Src\Object.h">
       <Filter>Vendor\GLM</Filter>
     </ClInclude>
     <ClInclude Include="Src\vendor\glm\gtx\optimum_pow.hpp">
@@ -786,6 +777,15 @@
     <ClInclude Include="Src\Ray.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Src\Light.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Src\Object.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Src\Vertex.h">
+      <Filter>Header Files\Geometry</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Src\Image.cpp">
@@ -812,9 +812,6 @@
     <ClCompile Include="Src\ComparePrimitives.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Src\ThreadManager.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Src\Geometry.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -829,6 +826,9 @@
     </ClCompile>
     <ClCompile Include="Src\vendor\glm\detail\glm.cpp">
       <Filter>Vendor\GLM</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Light.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

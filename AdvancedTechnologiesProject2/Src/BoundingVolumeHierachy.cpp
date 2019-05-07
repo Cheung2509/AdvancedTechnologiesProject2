@@ -136,6 +136,7 @@ void BVH::buildRecursiveBVH(int leftIndex, int rightIndex, std::shared_ptr<BVHNo
 		node->setRight(rightNode);
 
 		node->createNode(leftIndex, rightIndex - leftIndex);
+
 		buildRecursiveBVH(leftIndex, splitIndex, node->getLeft(), depth + 1, axis);
 		buildRecursiveBVH(splitIndex, rightIndex, node->getRight(), depth + 1, axis);
 		m_numberOfNodes++;
@@ -188,13 +189,16 @@ void BVH::buildSAH(std::vector<std::shared_ptr<Geometry>> shapes)
 
 void BVH::buildRecursiveSAH(const int& leftIndex, const int& rightIndex, std::shared_ptr<BVHNode> node, const int& depth)
 {
-	if ((rightIndex - leftIndex) <= 4 || depth > 100)
+
+	if ((rightIndex - leftIndex) <= 4 || depth > 200)
 	{
+		//If there are less than 4 object or depth has gone too deep create a leaf
 		node->createLeaf(leftIndex, rightIndex - leftIndex);
 		m_numberOfNodes++;
 	}
 	else
 	{
+		//Cost of current node
 		float bestCost = 1.0f + node->getBounds().getSurfaceArea() * 2.0f * (rightIndex - leftIndex);
 
 		float bestSplit = kInfinity;
@@ -209,10 +213,12 @@ void BVH::buildRecursiveSAH(const int& leftIndex, const int& rightIndex, std::sh
 
 		for (int j = 0; j < 3; j++)
 		{
+			//Get the axis
 			Axis axis = static_cast<Axis>(j);
 
 			float start, stop, step;
 
+			//Get the bounds of each axis
 			switch (axis)
 			{
 			case Axis::X:
@@ -229,13 +235,14 @@ void BVH::buildRecursiveSAH(const int& leftIndex, const int& rightIndex, std::sh
 				break;
 			}
 
+			//if start stop is more than 1e-4
 			if (glm::abs(stop - start) < 1e-4)
 				continue;
 
+			//Calculate step for test splits
 			step = (stop - start) / (1024.0f / (float)(depth + 1));
 
-			
-
+			//loop over test splits
 			for (float testSplit = start + step; testSplit < stop - step; testSplit += step)
 			{
 				int lCount = 0;
@@ -245,6 +252,7 @@ void BVH::buildRecursiveSAH(const int& leftIndex, const int& rightIndex, std::sh
 				{
 					float value;
 
+					//Get position of an axis
 					switch (axis)
 					{
 					case Axis::X:
@@ -258,6 +266,7 @@ void BVH::buildRecursiveSAH(const int& leftIndex, const int& rightIndex, std::sh
 						break;
 					}
 
+					//apply box of left and right.
 					if (value < testSplit)
 					{
 						lBox.setMin(glm::min(lBox.getMin(), m_shapes[i]->getBox().getMin()));
@@ -272,12 +281,15 @@ void BVH::buildRecursiveSAH(const int& leftIndex, const int& rightIndex, std::sh
 					}
 				}
 
+				//Continue
 				if (lCount <= 1 || rCount <= 1)
 					continue;
 
+				//Cost of split
 				float totalCost = 1.0f + ((lBox.getSurfaceArea() / rBox.getSurfaceArea()) *lCount * 2) +
 					((rBox.getSurfaceArea() / lBox.getSurfaceArea()) *lCount * 2);
-
+				
+				//if the cost is less than best cost, replace it
 				if (totalCost < bestCost)
 				{
 					bestCost = totalCost;
@@ -290,6 +302,7 @@ void BVH::buildRecursiveSAH(const int& leftIndex, const int& rightIndex, std::sh
 			}
 		}
 
+		//If there are no suitible axis then create a leaf
 		if (bestAxis == Axis::NONE)
 		{
 			node->createLeaf(leftIndex, rightIndex - leftIndex);
@@ -297,16 +310,24 @@ void BVH::buildRecursiveSAH(const int& leftIndex, const int& rightIndex, std::sh
 			return;
 		}
 
+		//Initialize as node
 		node->createNode(leftIndex, rightIndex - leftIndex);
 		m_numberOfNodes++;
-		
+
+		//Create left node
 		node->setLeft(std::make_shared<BVHNode>());
 		node->getLeft()->setBounds(lBox);
-		buildRecursiveSAH(leftIndex, left, node->getLeft(), depth + 1);
-		
+		std::thread t1(&BVH::buildRecursiveSAH, this, leftIndex, left, node->getLeft(), depth + 1);
+		//buildRecursiveSAH(leftIndex, left, node->getLeft(), depth + 1);
+
+		//Create right node
 		node->setRight(std::make_shared<BVHNode>());
 		node->getRight()->setBounds(rBox);
-		buildRecursiveSAH(leftIndex, rightIndex, node->getRight(), depth + 1);
+		//buildRecursiveSAH(left, rightIndex, node->getRight(), depth + 1);
+		std::thread t2(&BVH::buildRecursiveSAH, this, left, rightIndex, node->getRight(), depth + 1);
+
+		t1.join();
+		t2.join();
 	}
 }
 
@@ -319,20 +340,25 @@ bool BVH::checkIntersection(Ray* ray, Geometry** hitObj, std::uint64_t & index, 
 
 	do
 	{
+		//If ray collidaes with teh curren node
 		if (currentNode->getBounds().checkRayCollision(ray))
 		{
 			if (!currentNode->isLeaf())
 			{
+				//If it is not leaf then check intersection of child nodes 
 				float t1 = kInfinity;
 				float t2 = kInfinity;
 
 				bool leftIntersect = currentNode->getLeft()->getBounds().checkRayCollision(ray, t1);
 				bool rightIntersect = currentNode->getBounds().checkRayCollision(ray, t2);
 
+				//if both intersect with ray
 				if (leftIntersect && rightIntersect)
 				{
+					
 					if (t1 > t2)
 					{
+						//add left first then right node into stack
 						StackItem farthest;
 						farthest.ptr = currentNode->getRight().get();
 						farthest.t = t2;
@@ -347,6 +373,7 @@ bool BVH::checkIntersection(Ray* ray, Geometry** hitObj, std::uint64_t & index, 
 					}
 					else
 					{
+						//add right first then left node into stack
 						StackItem farthest;
 						farthest.ptr = currentNode->getLeft().get();
 						farthest.t = t1;
@@ -359,6 +386,7 @@ bool BVH::checkIntersection(Ray* ray, Geometry** hitObj, std::uint64_t & index, 
 					}
 				}
 
+				//Add only left if no itersection on right
 				if (leftIntersect && !rightIntersect)
 				{
 					StackItem node;
@@ -367,6 +395,7 @@ bool BVH::checkIntersection(Ray* ray, Geometry** hitObj, std::uint64_t & index, 
 					stackItems.push(node);
 				}
 
+				//Add only right if no itersection on left
 				if (rightIntersect && !leftIntersect)
 				{
 					StackItem node;
@@ -377,14 +406,18 @@ bool BVH::checkIntersection(Ray* ray, Geometry** hitObj, std::uint64_t & index, 
 			}
 			else
 			{
+				//If a leaf loop through all geometry in the node
 				for (int i = currentNode->getIndex(); i < currentNode->getIndex() + currentNode->getNumberOfObjects(); i++)
 				{
 					float distance = kInfinity;
 					
+					//Check AABB collision first
 					if (m_shapes[i]->getBox().checkRayCollision(ray))
 					{
+						//Check for collistion
 						if (m_shapes[i]->intersect(ray, index, uv, distance))
 						{
+							//If distance is less than closest shape hit by ray , replace it
 							if (distance < t)
 							{
 								t = distance;
@@ -396,6 +429,7 @@ bool BVH::checkIntersection(Ray* ray, Geometry** hitObj, std::uint64_t & index, 
 			}
 		}
 
+		//if not empty go to the next node
 		if (!stackItems.empty())
 		{
 			currentNode = stackItems.top().ptr;

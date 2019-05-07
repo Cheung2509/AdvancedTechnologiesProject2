@@ -12,7 +12,6 @@
 #include "Model.h"
 #include "Light.h"
 #include "BoundingVolumeHierachy.h"
-#include "ThreadManager.h"
 
 int main()
 {   
@@ -22,50 +21,34 @@ int main()
 	std::vector<std::shared_ptr<Geometry>> shapes;
 	std::vector<std::shared_ptr<Light>> lights;
 
+	//Create light
 	auto light = std::make_shared<Light>();
 	light->setIntensity(1);
 	light->setPos(glm::vec3(0.0f, 0.0f, 1.0f));
 	lights.emplace_back(std::move(light));
 
-	/*std::random_device rd;
-	std::mt19937 rng(rd());
-	std::uniform_real<float> x(-20, 20);
-	std::uniform_real<float> z(-30, -20);
-	std::uniform_real<float> y(-20, 20);
-	std::uniform_real<float> col(0, 1.0f);
-
-	for (int i = 0; i < 100; i++)
-	{
-		auto sphere = std::make_shared<Sphere>(0.5f, glm::vec3(col(rng), col(rng), col(rng)),
-											   glm::vec3(x(rng), y(rng), -10));
-		sphere->setMaterialType(MaterialType::DIFFUSE_AND_GLOSSY);
-		shapes.emplace_back(std::move(sphere));
-	}*/
-
-	auto model = std::make_shared<Model>("monkey.obj", glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f));
+	//Initialize objects in scene
+	auto model = std::make_shared<Model>("suzanne.obj", glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0));
+	model->setMaterialType(MaterialType::PHONG);
 	shapes.emplace_back(model);
 
-	auto model2 = std::make_shared<Model>("monkey.obj", glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 2.5f, 0.0f));
+	auto model2 = std::make_shared<Model>("suzanne.obj", glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 2.5f, 0.0f));
 	shapes.emplace_back(model2);
 
-	auto model3 = std::make_shared<Model>("monkey.obj", glm::vec3(1.0f, 0.0f, 1.0f), glm::vec3(0.0, -2.5f, 0.0f));
+	auto model3 = std::make_shared<Model>("suzanne.obj", glm::vec3(1.0f, 0.0f, 1.0f), glm::vec3(0.0, -2.5f, 0.0f));
 	shapes.emplace_back(model3);
 
-	auto model4 = std::make_shared<Model>("monkey.obj", glm::vec3(1.0f, 1.0f, 0.0f), glm::vec3(2.5f, 0.0f, 0.0f));
+	auto model4 = std::make_shared<Model>("suzanne.obj", glm::vec3(1.0f, 1.0f, 0.0f), glm::vec3(3.0f, 0.0f, 0.0f));
 	shapes.emplace_back(model4);
 
-	auto model5 = std::make_shared<Model>("monkey.obj", glm::vec3(1.0f, 0.0f, 1.0f), glm::vec3(-2.5f, 0.0f, 0.0f));
+	auto model5 = std::make_shared<Model>("suzanne.obj", glm::vec3(1.0f, 0.0f, 1.0f), glm::vec3(-3.0f, 0.0f, 0.0f));
 	shapes.emplace_back(model5);
-
-	/*auto triangle = std::make_shared<Triangle>(glm::vec3(-1, -1, 1), glm::vec3(1, -1, 1), glm::vec3(0, 1, 1), glm::vec3(1.0f, 0.0f, 0.0f));
-	triangle->setMaterialType(MaterialType::DIFFUSE_AND_GLOSSY);
-	shapes.emplace_back(std::move(triangle));*/
 
 	auto camera = std::make_unique<Camera>(90, float(window->getSize().x) / float(window->getSize().y),
 										   glm::vec3(0.0f, -1.0f, 0.0f),
 										   glm::vec3(0.0f, 0.0f, 0.0f));
-	camera->setPos(glm::vec3(0.0f, 0.0f, 4.0f));
 
+	//Build BVH
 	auto sah = std::make_shared<BVH>();
 	sah->buildSAH(shapes);
 	
@@ -76,7 +59,9 @@ int main()
 	auto end = std::chrono::steady_clock::now();
 	std::chrono::duration<float> TimeSAH = end - start;
 
-	std::cout << "Time to render with SAH: " << TimeSAH.count() << "Seconds." << std::endl;
+	std::cout << "Time to render with SAH: " << TimeSAH.count() << std::endl;
+
+	image->exportImage();
 
     while (window->isOpen())
     {

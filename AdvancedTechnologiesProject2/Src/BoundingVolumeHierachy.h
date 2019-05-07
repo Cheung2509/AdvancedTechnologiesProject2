@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <vector>
+#include <future>
 
 #include "glm/glm.hpp"
 
@@ -32,6 +33,8 @@ public:
 	bool checkIntersection(Ray* ray, Geometry** hitObj, std::uint64_t& index, glm::vec2& uv);
 private:
 	std::vector<std::shared_ptr<Geometry>> m_shapes;
+
+	std::vector<std::future<void>> m_tasks;
 
 	std::shared_ptr<BVHNode> m_rootNode;
 	int m_numberOfNodes = 0;

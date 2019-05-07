@@ -9,9 +9,10 @@ class Ray;
 
 enum MaterialType
 {
-	DIFFUSE_AND_GLOSSY,
+	DIFFUSE,
 	REFLECTION_AND_REFRACTION,
-	REFLECTION
+	REFLECTION,
+	PHONG
 };
 
 enum GeometryType
@@ -24,7 +25,7 @@ class Geometry : public Object
 {
 public:
 	Geometry() = default;
-	Geometry(const glm::vec3& col, GeometryType gType, MaterialType type = DIFFUSE_AND_GLOSSY, float ior = 1.3f, float kd = 0.8f, float ks = 0.2, 
+	Geometry(const glm::vec3& col, GeometryType gType, MaterialType type = DIFFUSE, float ior = 1.3f, float kd = 0.8f, float ks = 0.2, 
 		  float specular = 25);
 	virtual ~Geometry() = default;
 
@@ -41,6 +42,7 @@ public:
 	const float& getKD()  const { return m_kd; }
 	const float& getKS()  const { return m_ks; }
 	const float& getSpecularExponent() const { return m_specularExponent; }
+	const glm::vec3& getAlbedo() const { return m_albedo; }
 	const AABB& getBox() const { return m_boundingBox; }
 
 	void setIOR(const float& ior) { m_ior = ior; }
@@ -51,7 +53,7 @@ public:
 	void setMaterialType(const MaterialType& type) { m_matType = type; }
 
 
-	virtual void getSurfaceProperties(const glm::vec3&, const glm::vec3&, const uint64_t&, const glm::vec2&, glm::vec3&, glm::vec2&) const = 0;
+	virtual void getSurface(const glm::vec3&, const glm::vec3&, const uint64_t&, const glm::vec2&, glm::vec3&, glm::vec2&) const = 0;
 	virtual glm::vec3 evalDiffuseColour(const glm::vec2&) const { return m_diffuseColour; }
 protected:
 	glm::vec3 m_diffuseColour;
@@ -60,9 +62,10 @@ protected:
 	GeometryType m_geometryType;
 
 	float m_ior;
-	float m_kd;
-	float m_ks;
-	float m_specularExponent;
+	float m_kd; //diffuse weight;
+	float m_ks;// specular weight
+	float m_specularExponent; //Specular exponent
+	glm::vec3 m_albedo = glm::vec3(0.18);
 
 	AABB m_boundingBox;
 };

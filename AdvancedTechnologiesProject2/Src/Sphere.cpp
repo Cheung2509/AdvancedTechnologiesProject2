@@ -15,9 +15,11 @@ Sphere::Sphere(const float & r, const glm::vec3 & colour, const glm::vec3& pos)
 
 bool Sphere::intersect(Ray* ray, std::uint64_t & index, glm::vec2 & uv, float& t)
 {
+	//2 positions that could be intersected
 	float t0;
 	float t1;
 
+	//geometric solution to intersection check for spheres
 	glm::vec3 l = m_pos - ray->getOrigin();
 	float tca = glm::dot(l, ray->getDirection());
 	if (tca < 0)
@@ -31,22 +33,21 @@ bool Sphere::intersect(Ray* ray, std::uint64_t & index, glm::vec2 & uv, float& t
 	t0 = tca - thc;
 	t1 = tca + thc;
 
+	if(t0 < 0 && t1 < 0)
+	{
+		return false;
+	}
+
+	//Get the closest intersection
 	if (t0 > t1)
 	{
 		std::swap(t0, t1);
 	}
 
-	if(t0 < 0)
-	{
-		t0 = t1;
-		if (t0 < 0)
-		{
-			return false;
-		}
-	}
 
 	if (t0 < ray->getClosestHit())
 	{
+		//Set the object the ray hit as this one as it is closer
 		ray->setHit(t0);
 	}
 
@@ -66,7 +67,10 @@ void Sphere::getSurfaceData(const glm::vec3& pHit, glm::vec3& nHit, glm::vec2& t
 	tex.y = acosf(nHit.y) / M_PI;
 }
 
-void Sphere::getSurfaceProperties(const glm::vec3 & p, const glm::vec3 & i, const uint64_t & index, const glm::vec2 & uv, glm::vec3 & n, glm::vec2 & st) const
+void Sphere::getSurface(const glm::vec3 & p, const glm::vec3 & i, const uint64_t & index, const glm::vec2 & uv, glm::vec3 & n, glm::vec2 & st) const
 {
 	n = glm::normalize(p - m_pos);
+
+	st.x = (1 + atan2(n.z, n.x) / M_PI) * 0.5f;
+	st.y = acosf(n.y) / M_PI;
 }
