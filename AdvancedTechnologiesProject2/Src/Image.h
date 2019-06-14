@@ -5,6 +5,7 @@
 
 #include <glm/glm.hpp>
 
+#include <future>
 #include <vector>
 #include <thread>
 #include <atomic>
@@ -35,19 +36,21 @@ public:
 	void render(Camera* camera, const std::vector<std::shared_ptr<Geometry>>& shapes,
 				const std::vector<std::shared_ptr<Light>>& lights);
 	void render(Camera* camera,std::shared_ptr<BVH>& bvh,
-				const std::vector<std::shared_ptr<Light>>& lights);
+				const std::vector<std::shared_ptr<Light>>& lights, std::atomic<sf::RenderWindow*>& window);
 
 	bool createImage();
 
 	bool exportImage();
-	void draw(sf::RenderWindow* renderWindow);
+	void draw(std::atomic<sf::RenderWindow*>& renderWindow);
 
 	const glm::u64vec2& getSize() const { return m_imageData.m_size; }
 private:
 	ImageData m_imageData;
 	std::vector<std::shared_ptr<glm::vec4>> m_pixels;
 
-	std::atomic<sf::Image*> m_image;
-	sf::Texture m_texture;
-	sf::Sprite m_sprite;
+	std::vector<std::future<void>> m_future_vector;
+
+	std::atomic<sf::Image*> m_image; 
+	std::atomic<sf::Texture*> m_texture;
+	std::atomic<sf::Sprite*> m_sprite;
 };

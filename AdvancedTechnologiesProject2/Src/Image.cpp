@@ -2,7 +2,6 @@
 
 #include <iostream>
 #include <glm/glm.hpp>
-#include <future>
 
 #include "Geometry.h"
 #include "Camera.h"
@@ -24,6 +23,8 @@ Image::Image(Camera* camera, unsigned int sizeX, unsigned int sizeY)
 
 	m_image = new sf::Image();
 	m_image.load()->create(m_imageData.m_size.x, m_imageData.m_size.y);
+	m_texture = new sf::Texture();
+	m_sprite = new sf::Sprite();
 }
 
 void Image::putPixel(glm::u64vec2 pos, glm::vec4 colour)
@@ -79,15 +80,13 @@ void Image::render(Camera* camera, const std::vector<std::shared_ptr<Geometry>>&
 	createImage();
 }
 
-void Image::render(Camera * camera, std::shared_ptr<BVH>& bvh, const std::vector<std::shared_ptr<Light>>& lights)
+void Image::render(Camera * camera, std::shared_ptr<BVH>& bvh, const std::vector<std::shared_ptr<Light>>& lights, std::atomic<sf::RenderWindow*>& window)
 {
 	float scale = glm::tan(glm::radians(m_imageData.m_fov * 0.5f));
 
-	bool threading = false;
-	int cores = std::thread::hardware_concurrency();
+	bool threading = true;
+	int cores = std::thread::hardware_concurrency() - 2;
 	int max = m_imageData.m_size.x * m_imageData.m_size.y;
-	std::vector<std::future<void>> future_vector;
-
 	
 	glm::mat4 model(1.0f);
 
@@ -96,7 +95,7 @@ void Image::render(Camera * camera, std::shared_ptr<BVH>& bvh, const std::vector
 		//Assign pixels to render for each thread
 		for(int c = 0; c < cores; ++c)
 		{
-			future_vector.emplace_back(std::async([=]()
+			m_future_vector.emplace_back(std::async([=]()
 			{
 				int part = m_imageData.m_size.y / cores;
 				for(int i = 0; i < part; i++)
@@ -110,19 +109,17 @@ void Image::render(Camera * camera, std::shared_ptr<BVH>& bvh, const std::vector
 													 camera->getProjection(),
 													 glm::vec4(0, 0, m_imageData.m_size.x, m_imageData.m_size.y));
 						Ray ray(camera->getPos(), glm::normalize(p - camera->getPos()), 0);
-
-						//Assign colour to pixel
 						putPixel(glm::u64vec2(x, y), glm::vec4(ray.castRay(bvh, lights, m_imageData), 1.0f));
 					}
 				}
 			}));
 		}
 
-		//Wait for all threads to be done
-		for(auto& thread : future_vector)
-		{
-			thread.wait();
-		}
+		////Wait for all threads to be done
+		//for(auto& thread : future_vector)
+		//{
+		//	//thread.wait();
+		//}
 	}
 	else
 	{
@@ -141,37 +138,18 @@ void Image::render(Camera * camera, std::shared_ptr<BVH>& bvh, const std::vector
 		}
 	}
 
-	createImage();
+	//createImage();
 }
 
 bool Image::createImage()
 {
-	auto start = std::chrono::steady_clock::now();
-
-	////Create image to render
-	//std::vector<sf::Uint8> pixels;
-
-	//for (auto& pixel : m_pixels)
-	//{
-	//	pixels.emplace_back(sf::Uint8(glm::min(1.0f, pixel->r) * 255));
-	//	pixels.emplace_back(sf::Uint8(glm::min(1.0f, pixel->g) * 255));
-	//	pixels.emplace_back(sf::Uint8(glm::min(1.0f, pixel->b) * 255));
-	//	pixels.emplace_back(sf::Uint8(glm::min(1.0f, pixel->a) * 255));
-	//}
-
-	if (!m_texture.loadFromImage(*m_image.load()))
+	if (!m_texture.load()->loadFromImage(*m_image.load()))
 	{
 		std::cout << "Failed to load image" << std::endl;
 		return false;
 	}
 
-	m_sprite.setTexture(m_texture);
-
-	auto end = std::chrono::steady_clock::now();
-
-	std::chrono::duration<float> time = end - start;
-
-	//std::cout << "Time to create image:" << time.count() << std::endl;
+	m_sprite.load()->setTexture(*m_texture);
 
 	return true;
 }
@@ -186,10 +164,11 @@ bool Image::exportImage()
 	return false;
 }
 
-void Image::draw(sf::RenderWindow* renderWindow)
+void Image::draw(std::atomic<sf::RenderWindow*>& renderWindow)
 {
-	m_texture.loadFromImage(*m_image.load());
-	m_sprite.setTexture(m_texture);
+	createImage();
+	m_texture.load()->loadFromImage(*m_image.load());
+	m_sprite.load()->setTexture(*m_texture);
 
-	renderWindow->draw(m_sprite);
+	renderWindow.load()->draw(*m_sprite);
 }

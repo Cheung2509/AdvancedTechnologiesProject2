@@ -168,9 +168,6 @@
     <ClInclude Include="Src\vendor\glm\gtx\hash.hpp">
       <Filter>Vendor\GLM</Filter>
     </ClInclude>
-    <ClInclude Include="Src\Image.h">
-      <Filter>Vendor\GLM</Filter>
-    </ClInclude>
     <ClInclude Include="Src\vendor\glm\simd\integer.h">
       <Filter>Vendor\GLM</Filter>
     </ClInclude>
@@ -785,6 +782,9 @@
     </ClInclude>
     <ClInclude Include="Src\Vertex.h">
       <Filter>Header Files\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="Src\Image.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
